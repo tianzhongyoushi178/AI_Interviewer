@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>バグ修正報告書 — InterviewResult#rejected? テスト失敗</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    font-size: 11pt;
+    line-height: 1.8;
+    color: #1a1a1a;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 20mm;
+  }
+  h1 {
+    font-size: 18pt;
+    border-bottom: 3px solid #2c3e50;
+    padding-bottom: 8px;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 14pt;
+    color: #2c3e50;
+    border-left: 4px solid #3498db;
+    padding-left: 10px;
+    margin-top: 30px;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #34495e;
+    margin-top: 20px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #bdc3c7;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: #2c3e50;
+    color: #fff;
+    font-weight: bold;
+  }
+  tr:nth-child(even) { background-color: #f8f9fa; }
+  code {
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 10pt;
+  }
+  pre {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 9.5pt;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .header-meta {
+    margin-bottom: 24px;
+    font-size: 10pt;
+    color: #555;
+  }
+  .header-meta table { width: auto; }
+  .header-meta th {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    width: 140px;
+  }
+  .severity-critical {
+    display: inline-block;
+    background-color: #e74c3c;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+  .severity-low {
+    display: inline-block;
+    background-color: #f39c12;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+  .status-resolved {
+    display: inline-block;
+    background-color: #27ae60;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+  .diagram {
+    background-color: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+    font-family: "Consolas", monospace;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    white-space: pre;
+    margin: 12px 0;
+  }
+  .impact-box {
+    background-color: #fdf2e9;
+    border-left: 4px solid #e67e22;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .result-box {
+    background-color: #eafaf1;
+    border-left: 4px solid #27ae60;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+  .footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #ccc;
+    font-size: 9pt;
+    color: #888;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>バグ修正報告書</h1>
+<p style="font-size:13pt; color:#555; margin-top:-8px;">InterviewResult#rejected? テスト失敗の原因分析と修正</p>
+
+<div class="header-meta">
+<table>
+  <tr><th>プロジェクト</th><td>AI面接インタビューシステム</td></tr>
+  <tr><th>フレームワーク</th><td>Ruby on Rails 6.1.7 / Ruby 3.1.6</td></tr>
+  <tr><th>報告日</th><td>2026年3月21日</td></tr>
+  <tr><th>重要度</th><td><span class="severity-low">Medium</span></td></tr>
+  <tr><th>ステータス</th><td><span class="status-resolved">修正済み</span></td></tr>
+  <tr><th>影響範囲</th><td>InterviewResult モデル — 不合格判定ロジック</td></tr>
+</table>
+</div>
+
+<hr>
+
+<h2>1. 障害概要</h2>
+
+<p><code>bundle exec rspec</code> 実行時、全254テスト中1件が失敗。</p>
+
+<table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>テストファイル</td><td><code>spec/models/interview_result_spec.rb:52</code></td></tr>
+  <tr><td>テスト名</td><td><code>InterviewResult#rejected? returns false when rejection_details empty</code></td></tr>
+  <tr><td>期待値</td><td><code>false</code></td></tr>
+  <tr><td>実測値</td><td><code>true</code></td></tr>
+  <tr><td>テスト総数</td><td>254 examples, 1 failure</td></tr>
+</table>
+
+<h3>エラー出力</h3>
+<pre><code>Failures:
+
+  1) InterviewResult#rejected? returns false when rejection_details empty
+     Failure/Error: expect(result.rejected?).to be false
+
+       expected false
+            got true
+     # ./spec/models/interview_result_spec.rb:54:in `block (3 levels) in &lt;top (required)&gt;'</code></pre>
+
+<hr>
+
+<h2>2. 原因分析</h2>
+
+<h3>2.1 修正前コード</h3>
+<p>ファイル: <code>app/models/interview_result.rb</code></p>
+<pre><code>def rejected?
+  rejection_details.present? &amp;&amp; rejection_details != {}
+end</code></pre>
+
+<h3>2.2 根本原因：SQLite の JSON カラム型の挙動</h3>
+
+<p>DBスキーマでは <code>rejection_details</code> カラムは以下のように定義されています:</p>
+<pre><code>t.json "rejection_details", default: {}</code></pre>
+
+<p>ここで問題となるのが <strong>SQLite の JSON カラムの内部表現</strong> です。</p>
+
+<div class="diagram">
+【PostgreSQL（本番環境）の場合】
+  DB格納値:  {}           (ネイティブ JSON型)
+  Rails読取: {}           (Ruby Hash)
+  {}.present? → false     ✅ 正常動作
+
+【SQLite（開発/テスト環境）の場合】
+  DB格納値:  "{}"         (TEXT型として格納)
+  Rails読取: "{}"         (Ruby String)
+  "{}".present? → true    ❌ 意図しない動作
+</code></div>
+
+<div class="impact-box">
+<strong>原因まとめ:</strong> SQLite は JSON 型をネイティブサポートしておらず、TEXT 型として格納します。
+Rails が値を読み取ると Ruby の <strong>String <code>"{}"</code></strong> として返されます。
+<code>String#present?</code> は空文字でない限り <code>true</code> を返すため、
+空ハッシュであるはずの <code>rejection_details</code> が「存在する」と誤判定されました。
+</div>
+
+<h3>2.3 比較表</h3>
+
+<table>
+  <tr><th>チェック式</th><th>PostgreSQL (<code>{}</code> Hash)</th><th>SQLite (<code>"{}"</code> String)</th></tr>
+  <tr><td><code>.present?</code></td><td><code>false</code> ✅</td><td><code>true</code> ❌</td></tr>
+  <tr><td><code>!= {}</code></td><td><code>false</code> ✅</td><td><code>true</code> ❌</td></tr>
+  <tr><td><code>.blank?</code></td><td><code>true</code> ✅</td><td><code>false</code> ❌</td></tr>
+</table>
+
+<p>つまり修正前のコードは <strong>PostgreSQL 前提</strong> であり、SQLite 環境では常に <code>true</code> を返してしまう問題がありました。</p>
+
+<hr>
+
+<h2>3. 修正内容</h2>
+
+<h3>3.1 修正後コード</h3>
+<p>ファイル: <code>app/models/interview_result.rb:35-40</code></p>
+<pre><code>def rejected?
+  details = rejection_details
+  return false if details.blank?
+
+  parsed = details.is_a?(String) ? (JSON.parse(details) rescue nil) : details
+  parsed.is_a?(Hash) &amp;&amp; parsed.any?
+end</code></pre>
+
+<h3>3.2 修正ロジックの説明</h3>
+
+<table>
+  <tr><th>ステップ</th><th>処理内容</th><th>目的</th></tr>
+  <tr><td>1</td><td><code>details.blank?</code> チェック</td><td><code>nil</code>・空文字・空ハッシュを早期リターン</td></tr>
+  <tr><td>2</td><td><code>is_a?(String)</code> 判定</td><td>SQLite が返す文字列型を検出</td></tr>
+  <tr><td>3</td><td><code>JSON.parse</code> + <code>rescue</code></td><td>文字列を安全にHashへ変換</td></tr>
+  <tr><td>4</td><td><code>parsed.is_a?(Hash) && parsed.any?</code></td><td>中身のあるHashの場合のみ <code>true</code></td></tr>
+</table>
+
+<h3>3.3 各入力パターンの動作確認</h3>
+
+<table>
+  <tr><th>入力値</th><th>型</th><th>修正前</th><th>修正後</th></tr>
+  <tr><td><code>nil</code></td><td>NilClass</td><td><code>false</code></td><td><code>false</code> ✅</td></tr>
+  <tr><td><code>{}</code></td><td>Hash</td><td><code>false</code></td><td><code>false</code> ✅</td></tr>
+  <tr><td><code>"{}"</code></td><td>String</td><td><code>true</code> ❌</td><td><code>false</code> ✅</td></tr>
+  <tr><td><code>{"reason"=>"スコア不足"}</code></td><td>Hash</td><td><code>true</code></td><td><code>true</code> ✅</td></tr>
+  <tr><td><code>'{"reason":"スコア不足"}'</code></td><td>String</td><td><code>true</code></td><td><code>true</code> ✅</td></tr>
+</table>
+
+<hr>
+
+<h2>4. テスト実行結果</h2>
+
+<h3>4.1 対象テスト単体実行</h3>
+<pre><code>$ bundle exec rspec spec/models/interview_result_spec.rb:52
+
+InterviewResult
+  #rejected?
+    returns false when rejection_details empty
+
+1 example, 0 failures</code></pre>
+
+<h3>4.2 InterviewResult 全テスト実行</h3>
+<pre><code>$ bundle exec rspec spec/models/interview_result_spec.rb
+
+InterviewResult
+  #rejected?
+    returns true when rejection_details present
+    returns false when rejection_details empty
+  uniqueness
+    prevents duplicate results for same interview
+  associations
+    is expected to belong to interview required: true
+  validations
+    is expected to validate that :interview_id cannot be empty/falsy
+  #completion_percentage
+    returns 0 when total_questions is zero
+    calculates correct percentage
+    returns 0 when total_questions is nil
+  enums
+    is expected to define :final_status as an enum backed by an integer
+  results_data store
+    stores and retrieves values
+
+10 examples, 0 failures</code></pre>
+
+<div class="result-box">
+<strong>結果:</strong> 全10テストが合格。修正前に失敗していたテストケースが正常に動作することを確認しました。
+</div>
+
+<hr>
+
+<h2>5. 影響範囲と今後の注意事項</h2>
+
+<h3>5.1 影響範囲</h3>
+<table>
+  <tr><th>対象</th><th>影響</th></tr>
+  <tr><td>本番環境 (PostgreSQL)</td><td>影響なし — PostgreSQL はネイティブ JSON 型を使用するため、修正前でも正常動作</td></tr>
+  <tr><td>開発/テスト環境 (SQLite)</td><td>修正により正常動作 — 文字列型の JSON 値を正しく処理</td></tr>
+  <tr><td>面接結果の不合格判定</td><td>SQLite 環境で「全結果が不合格」と誤表示されていた可能性を解消</td></tr>
+</table>
+
+<h3>5.2 今後の注意事項</h3>
+<ol>
+  <li><strong>DB間の型差異に注意:</strong> SQLite と PostgreSQL で <code>json</code> カラムの挙動が異なるため、JSON カラムを扱うメソッドでは型チェックを行うこと</li>
+  <li><strong>開発/テスト環境の統一検討:</strong> 本番と同じ PostgreSQL を開発環境でも使用することで、この種の不整合を根本的に防止可能</li>
+  <li><strong>類似パターンの確認:</strong> 他のモデルで JSON カラムのデフォルト値 <code>{}</code> を <code>present?</code> で判定している箇所がないか定期的にチェック</li>
+</ol>
+
+<hr>
+
+<h2>6. 変更ファイル一覧</h2>
+
+<table>
+  <tr><th>ファイル</th><th>変更種別</th><th>変更行</th></tr>
+  <tr><td><code>app/models/interview_result.rb</code></td><td>バグ修正</td><td>35〜40行目（<code>rejected?</code> メソッド）</td></tr>
+</table>
+
+<div class="footer">
+  AI面接インタビューシステム — バグ修正報告書 | 2026年3月21日作成
+</div>
+
+</body>
+</html>

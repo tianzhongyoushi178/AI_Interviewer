@@ -33,6 +33,10 @@ class InterviewResult < ApplicationRecord
   end
 
   def rejected?
-    rejection_details.present? && rejection_details != {}
+    details = rejection_details
+    return false if details.blank?
+
+    parsed = details.is_a?(String) ? (JSON.parse(details) rescue nil) : details
+    parsed.is_a?(Hash) && parsed.any?
   end
 end

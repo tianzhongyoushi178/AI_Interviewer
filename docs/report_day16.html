@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI面接インタビューシステム — Day 16 報告書</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Meiryo", "Hiragino Sans", "Yu Gothic", sans-serif; font-size: 10.5pt; line-height: 1.7; color: #1a1a1a; background: #fff; }
+  .cover { text-align: center; padding: 80px 20px 40px; page-break-after: always; display: flex; flex-direction: column; justify-content: center; min-height: 90vh; }
+  .cover h1 { font-size: 26pt; color: #1a365d; margin-bottom: 12px; letter-spacing: 2px; }
+  .cover .subtitle { font-size: 16pt; color: #2b6cb0; margin-bottom: 40px; font-weight: 600; }
+  .cover .meta { font-size: 11pt; color: #555; line-height: 2.2; }
+  .cover .meta strong { color: #1a1a1a; }
+  .cover .logo-box { width: 100px; height: 100px; margin: 0 auto 30px; background: linear-gradient(135deg, #2b6cb0, #4299e1); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 36pt; font-weight: 700; }
+  .toc { page-break-after: always; padding-top: 20px; }
+  .toc h2 { font-size: 16pt; color: #1a365d; border-bottom: 3px solid #2b6cb0; padding-bottom: 8px; margin-bottom: 24px; }
+  .toc ul { list-style: none; padding: 0; }
+  .toc li { padding: 8px 0; border-bottom: 1px dotted #ccc; font-size: 11pt; }
+  .toc li.day-header { font-weight: 700; font-size: 12pt; color: #2b6cb0; border-bottom: none; padding-top: 18px; }
+  h2.day-title { font-size: 18pt; color: #fff; background: linear-gradient(135deg, #1a365d, #2b6cb0); padding: 14px 20px; border-radius: 6px; margin: 30px 0 20px; page-break-before: always; }
+  h2.day-title:first-of-type { page-break-before: auto; }
+  h3 { font-size: 13pt; color: #1a365d; border-left: 4px solid #4299e1; padding-left: 12px; margin: 24px 0 12px; }
+  h4 { font-size: 11pt; color: #2b6cb0; margin: 16px 0 8px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 9.5pt; }
+  th { background: #edf2f7; color: #1a365d; font-weight: 700; padding: 8px 10px; text-align: left; border: 1px solid #cbd5e0; }
+  td { padding: 7px 10px; border: 1px solid #cbd5e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f7fafc; }
+  .code-block { background: #1a202c; color: #e2e8f0; border-radius: 6px; padding: 14px 16px; margin: 10px 0 16px; font-family: "Consolas", "Source Code Pro", monospace; font-size: 9pt; line-height: 1.6; overflow-x: auto; white-space: pre; }
+  .info-box { border-left: 4px solid #4299e1; background: #ebf8ff; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 10pt; }
+  .success-box { border-left: 4px solid #38a169; background: #f0fff4; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 10pt; }
+  .warn-box { border-left: 4px solid #dd6b20; background: #fffaf0; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 10pt; }
+  p { margin: 6px 0; } ul, ol { padding-left: 22px; margin: 6px 0 12px; } li { margin: 3px 0; }
+  strong { color: #1a365d; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 700; color: #fff; }
+  .badge-green { background: #38a169; } .badge-blue { background: #2b6cb0; } .badge-orange { background: #dd6b20; } .badge-red { background: #e53e3e; }
+  .file-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .file-item { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 9pt; }
+  .file-item .fname { font-family: monospace; font-weight: 700; color: #2b6cb0; font-size: 8.5pt; }
+  .file-item .fdesc { color: #4a5568; margin-top: 2px; }
+  .stats-row { display: flex; gap: 12px; margin: 16px 0; }
+  .stat-box { flex: 1; text-align: center; background: linear-gradient(135deg, #ebf8ff, #bee3f8); border-radius: 8px; padding: 16px 8px; }
+  .stat-box .num { font-size: 28pt; font-weight: 700; color: #1a365d; }
+  .stat-box .lbl { font-size: 9pt; color: #4a5568; margin-top: 4px; }
+  footer { text-align: center; font-size: 9pt; color: #a0aec0; margin-top: 40px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+  @media print { body { padding: 0; margin: 0; } .cover { min-height: 100vh; } h2.day-title { page-break-before: always; } .code-block, .info-box, .success-box, .warn-box, table { page-break-inside: avoid; } h3, h4 { page-break-after: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo-box">AI</div>
+  <h1>AI面接インタビューシステム</h1>
+  <div class="subtitle">Day 16 報告書</div>
+  <div class="meta">
+    <strong>プロジェクト:</strong> AI面接インタビューシステム<br>
+    <strong>フェーズ:</strong> Phase 4 — 本番セキュリティ強化・管理画面テスト<br>
+    <strong>対象:</strong> Day 16（Rack::Attackレート制限・Admin/Clientテスト）<br>
+    <strong>作成日:</strong> 2026-03-20<br>
+    <strong>フレームワーク:</strong> Ruby on Rails 6.1.7 / Ruby 3.1.6
+  </div>
+</div>
+
+<div class="toc">
+  <h2>目次</h2>
+  <ul>
+    <li class="day-header">Day 16: Rack::Attackレート制限導入・Admin/Clientテスト</li>
+    <li>1. 概要</li>
+    <li>2. Rack::Attack レート制限導入</li>
+    <li>3. レート制限テスト（10テスト）</li>
+    <li>4. Admin::InterviewResults テスト（7テスト）</li>
+    <li>5. Client::InterviewResults テスト（6テスト）</li>
+    <li class="day-header">まとめ</li>
+    <li>6. テスト結果サマリー</li>
+    <li>7. 変更ファイル一覧</li>
+  </ul>
+</div>
+
+<h2 class="day-title">Day 16: Rack::Attackレート制限導入・Admin/Clientテスト</h2>
+
+<h3>1. 概要</h3>
+<p>本番環境のセキュリティ強化として<strong>Rack::Attack</strong>によるAPIレート制限を導入。併せて未テストだった<strong>Admin/Client管理画面コントローラー</strong>のテストを追加し、認証・認可の網羅的な検証を実現した。テスト総数は292→316（+24テスト）となり、全件パスを確認した。</p>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="num">316</div><div class="lbl">テスト全件パス</div></div>
+  <div class="stat-box"><div class="num">+24</div><div class="lbl">新規テスト追加</div></div>
+  <div class="stat-box"><div class="num">6</div><div class="lbl">レート制限ルール</div></div>
+  <div class="stat-box" style="background: linear-gradient(135deg, #c6f6d5, #9ae6b4);"><div class="num">429</div><div class="lbl">API保護レスポンス</div></div>
+</div>
+
+<h3>2. Rack::Attack レート制限導入</h3>
+
+<table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>Gem</td><td><code>rack-attack 6.8.0</code></td></tr>
+  <tr><td>設定ファイル</td><td><code>config/initializers/rack_attack.rb</code></td></tr>
+  <tr><td>キャッシュ</td><td><code>ActiveSupport::Cache::MemoryStore</code>（本番ではRedis推奨）</td></tr>
+</table>
+
+<h4>レート制限ルール一覧</h4>
+<table>
+  <tr><th>ルール</th><th>対象</th><th>制限</th><th>目的</th></tr>
+  <tr><td><code>api/global</code></td><td><code>/api/*</code> 全体</td><td>60 req/min/IP</td><td>API全体の保護</td></tr>
+  <tr><td><code>api/interviews/start</code></td><td><code>POST /start</code></td><td>10 req/min/IP</td><td>面接乱用防止</td></tr>
+  <tr><td><code>api/interviews/start_by_token</code></td><td><code>POST /start_by_token</code></td><td>20 req/min/IP</td><td>トークン総当たり防止</td></tr>
+  <tr><td><code>api/interviews/submit_answer</code></td><td><code>POST /submit_answer</code></td><td>30 req/min/IP</td><td>アップロード制限</td></tr>
+  <tr><td><code>api/interviews/complete</code></td><td><code>POST /complete</code></td><td>10 req/min/IP</td><td>完了乱用防止</td></tr>
+  <tr><td><code>auth/login</code></td><td>Devise <code>sign_in</code></td><td>10 req/min/IP</td><td>ブルートフォース防止</td></tr>
+</table>
+
+<h4>セキュリティ機能</h4>
+<ul>
+  <li><strong>ホワイトリスト:</strong> localhost（127.0.0.1, ::1）は制限除外</li>
+  <li><strong>ブロックリスト:</strong> <code>ENV['BLOCKED_IPS']</code> で明示的なIP拒否</li>
+  <li><strong>429レスポンス:</strong> JSON形式 + <code>Retry-After</code>, <code>X-RateLimit-*</code> ヘッダー</li>
+  <li><strong>403レスポンス:</strong> ブロックIPに対するJSON形式レスポンス</li>
+</ul>
+
+<h3>3. レート制限テスト（10テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/requests/api/rate_limiting_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td>API全体レート制限</td><td>2</td><td>制限内OK、制限超過429</td></tr>
+  <tr><td>面接開始レート制限</td><td>2</td><td>10回内OK、11回目429</td></tr>
+  <tr><td>トークン開始レート制限</td><td>1</td><td>21回目429</td></tr>
+  <tr><td>429レスポンスフォーマット</td><td>3</td><td>JSON形式、Retry-After、X-RateLimitヘッダー</td></tr>
+  <tr><td>IPブロックリスト</td><td>1</td><td>ブロックIP→403</td></tr>
+  <tr><td>localhostセーフリスト</td><td>1</td><td>セーフリスト時制限なし</td></tr>
+</table>
+
+<h3>4. Admin::InterviewResults テスト（7テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/requests/admin/interview_results_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td><code>GET /admin/interview_results</code></td><td>5</td><td>Admin認証OK、複数結果表示、未認証リダイレクト、Client認証拒否、User認証拒否</td></tr>
+  <tr><td><code>GET /admin/interview_results/:id</code></td><td>2</td><td>詳細表示OK、存在しないID 404</td></tr>
+</table>
+
+<h3>5. Client::InterviewResults テスト（6テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/requests/client/interview_results_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td><code>GET /client/interview_results</code></td><td>3</td><td>Client認証OK、未認証リダイレクト、User認証拒否</td></tr>
+  <tr><td><code>GET /client/interview_results/:id</code></td><td>3</td><td>自分の結果OK、他Clientの結果RecordNotFound、未認証リダイレクト</td></tr>
+</table>
+
+<div class="info-box"><strong>認可テスト:</strong> Client間のデータ分離を確認。Client AがClient Bの面接結果にアクセスすると<code>ActiveRecord::RecordNotFound</code>（<code>where(client_id: current_client.id)</code>フィルタリングによる保護）。</div>
+
+<h2 class="day-title">まとめ</h2>
+
+<h3>6. テスト結果サマリー</h3>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="num">96</div><div class="lbl">Day 13</div></div>
+  <div class="stat-box"><div class="num">254</div><div class="lbl">Day 14</div></div>
+  <div class="stat-box"><div class="num">292</div><div class="lbl">Day 15</div></div>
+  <div class="stat-box" style="background: linear-gradient(135deg, #c6f6d5, #9ae6b4);"><div class="num">316</div><div class="lbl">Day 16</div></div>
+</div>
+
+<h3>7. 変更ファイル一覧</h3>
+
+<h4>新規作成ファイル（5件）</h4>
+<div class="file-list">
+  <div class="file-item"><div class="fname">config/initializers/rack_attack.rb</div><div class="fdesc">Rack::Attack レート制限設定</div></div>
+  <div class="file-item"><div class="fname">spec/requests/api/rate_limiting_spec.rb</div><div class="fdesc">レート制限テスト（10テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/requests/admin/interview_results_spec.rb</div><div class="fdesc">Admin管理画面テスト（7テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/requests/client/interview_results_spec.rb</div><div class="fdesc">Client管理画面テスト（6テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/factories/admins.rb</div><div class="fdesc">Admin Factory</div></div>
+</div>
+
+<h4>修正ファイル（1件）</h4>
+<table>
+  <tr><th>ファイル</th><th>変更内容</th></tr>
+  <tr><td><code>Gemfile</code></td><td><code>rack-attack</code> gem追加</td></tr>
+</table>
+
+<div class="success-box">
+  <strong>Day 16 完了:</strong> Rack::Attackレート制限導入（6ルール）、Admin/Clientテスト追加。テスト数292→316（+24）。全316テストがパス。
+</div>
+
+<footer>
+  AI面接インタビューシステム — Day 16 報告書 | 2026-03-20 | master ブランチ
+</footer>
+
+</body>
+</html>

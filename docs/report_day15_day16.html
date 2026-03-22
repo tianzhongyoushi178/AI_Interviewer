@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI面接インタビューシステム — Day 15・Day 16 統合報告書</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Meiryo", "Hiragino Sans", "Yu Gothic", sans-serif; font-size: 10.5pt; line-height: 1.7; color: #1a1a1a; background: #fff; }
+  .cover { text-align: center; padding: 80px 20px 40px; page-break-after: always; display: flex; flex-direction: column; justify-content: center; min-height: 90vh; }
+  .cover h1 { font-size: 26pt; color: #1a365d; margin-bottom: 12px; letter-spacing: 2px; }
+  .cover .subtitle { font-size: 16pt; color: #2b6cb0; margin-bottom: 40px; font-weight: 600; }
+  .cover .meta { font-size: 11pt; color: #555; line-height: 2.2; }
+  .cover .meta strong { color: #1a1a1a; }
+  .cover .logo-box { width: 100px; height: 100px; margin: 0 auto 30px; background: linear-gradient(135deg, #2b6cb0, #4299e1); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 36pt; font-weight: 700; }
+  .toc { page-break-after: always; padding-top: 20px; }
+  .toc h2 { font-size: 16pt; color: #1a365d; border-bottom: 3px solid #2b6cb0; padding-bottom: 8px; margin-bottom: 24px; }
+  .toc ul { list-style: none; padding: 0; }
+  .toc li { padding: 8px 0; border-bottom: 1px dotted #ccc; font-size: 11pt; }
+  .toc li.day-header { font-weight: 700; font-size: 12pt; color: #2b6cb0; border-bottom: none; padding-top: 18px; }
+  h2.day-title { font-size: 18pt; color: #fff; background: linear-gradient(135deg, #1a365d, #2b6cb0); padding: 14px 20px; border-radius: 6px; margin: 30px 0 20px; page-break-before: always; }
+  h2.day-title:first-of-type { page-break-before: auto; }
+  h3 { font-size: 13pt; color: #1a365d; border-left: 4px solid #4299e1; padding-left: 12px; margin: 24px 0 12px; }
+  h4 { font-size: 11pt; color: #2b6cb0; margin: 16px 0 8px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 9.5pt; }
+  th { background: #edf2f7; color: #1a365d; font-weight: 700; padding: 8px 10px; text-align: left; border: 1px solid #cbd5e0; }
+  td { padding: 7px 10px; border: 1px solid #cbd5e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f7fafc; }
+  .code-block { background: #1a202c; color: #e2e8f0; border-radius: 6px; padding: 14px 16px; margin: 10px 0 16px; font-family: "Consolas", "Source Code Pro", monospace; font-size: 9pt; line-height: 1.6; overflow-x: auto; white-space: pre; }
+  .info-box { border-left: 4px solid #4299e1; background: #ebf8ff; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 10pt; }
+  .success-box { border-left: 4px solid #38a169; background: #f0fff4; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 10pt; }
+  .warn-box { border-left: 4px solid #dd6b20; background: #fffaf0; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 10pt; }
+  p { margin: 6px 0; } ul, ol { padding-left: 22px; margin: 6px 0 12px; } li { margin: 3px 0; }
+  strong { color: #1a365d; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 700; color: #fff; }
+  .badge-green { background: #38a169; } .badge-blue { background: #2b6cb0; } .badge-orange { background: #dd6b20; } .badge-red { background: #e53e3e; }
+  .file-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .file-item { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 9pt; }
+  .file-item .fname { font-family: monospace; font-weight: 700; color: #2b6cb0; font-size: 8.5pt; }
+  .file-item .fdesc { color: #4a5568; margin-top: 2px; }
+  .stats-row { display: flex; gap: 12px; margin: 16px 0; }
+  .stat-box { flex: 1; text-align: center; background: linear-gradient(135deg, #ebf8ff, #bee3f8); border-radius: 8px; padding: 16px 8px; }
+  .stat-box .num { font-size: 28pt; font-weight: 700; color: #1a365d; }
+  .stat-box .lbl { font-size: 9pt; color: #4a5568; margin-top: 4px; }
+  footer { text-align: center; font-size: 9pt; color: #a0aec0; margin-top: 40px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+  @media print { body { padding: 0; margin: 0; } .cover { min-height: 100vh; } h2.day-title { page-break-before: always; } .code-block, .info-box, .success-box, .warn-box, table { page-break-inside: avoid; } h3, h4 { page-break-after: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo-box">AI</div>
+  <h1>AI面接インタビューシステム</h1>
+  <div class="subtitle">Day 15・Day 16 統合報告書</div>
+  <div class="meta">
+    <strong>プロジェクト:</strong> AI面接インタビューシステム<br>
+    <strong>フェーズ:</strong> Phase 4 — テストカバレッジ完了・本番セキュリティ強化<br>
+    <strong>対象:</strong> Day 15（Service層100%・Bullet導入）・Day 16（Rack::Attack・管理画面テスト）<br>
+    <strong>作成日:</strong> 2026-03-20<br>
+    <strong>フレームワーク:</strong> Ruby on Rails 6.1.7 / Ruby 3.1.6
+  </div>
+</div>
+
+<div class="toc">
+  <h2>目次</h2>
+  <ul>
+    <li class="day-header">Day 15: Service層テスト100%完了・Bullet導入・バグ修正</li>
+    <li>1. 概要</li>
+    <li>2. Bullet gem導入（N+1クエリ検出）</li>
+    <li>3. MediaProcessor テスト（19テスト）</li>
+    <li>4. AudioInterviewService テスト（11テスト）</li>
+    <li>5. EvaluateInterviewResponseJob テスト（8テスト）</li>
+    <li>6. バグ修正（2件）</li>
+    <li class="day-header">Day 16: Rack::Attackレート制限導入・Admin/Clientテスト</li>
+    <li>7. 概要</li>
+    <li>8. Rack::Attack レート制限導入</li>
+    <li>9. レート制限テスト（10テスト）</li>
+    <li>10. Admin::InterviewResults テスト（7テスト）</li>
+    <li>11. Client::InterviewResults テスト（6テスト）</li>
+    <li class="day-header">まとめ</li>
+    <li>12. テスト結果サマリー（Day 15→16 推移）</li>
+    <li>13. 変更ファイル一覧</li>
+    <li>14. セットアップ手順</li>
+  </ul>
+</div>
+
+<!-- ===== Day 15 ===== -->
+<h2 class="day-title">Day 15: Service層テスト100%完了・Bullet導入・バグ修正</h2>
+
+<h3>1. 概要</h3>
+<p>Phase 4の2日目として、<strong>残りのService層テスト3件</strong>（MediaProcessor, AudioInterviewService, EvaluateInterviewResponseJob）を追加し、Service層テストカバレッジを<strong>75%→100%</strong>に到達させた。併せて<strong>Bullet gem</strong>を導入しN+1クエリ検出を自動化。コード上のバグ2件も修正した。テスト総数は254→292（+38テスト）。</p>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="num">292</div><div class="lbl">テスト全件パス</div></div>
+  <div class="stat-box"><div class="num">+38</div><div class="lbl">新規テスト追加</div></div>
+  <div class="stat-box" style="background: linear-gradient(135deg, #c6f6d5, #9ae6b4);"><div class="num">100%</div><div class="lbl">Service層カバレッジ</div></div>
+  <div class="stat-box"><div class="num">2</div><div class="lbl">バグ修正</div></div>
+</div>
+
+<h3>2. Bullet gem導入（N+1クエリ検出）</h3>
+<table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>Gem</td><td><code>bullet 8.1.0</code></td></tr>
+  <tr><td>development設定</td><td><code>enable</code>, <code>rails_logger</code>, <code>console</code>, <code>add_footer</code></td></tr>
+  <tr><td>test設定</td><td><code>enable</code>, <code>bullet_logger</code>, <code>raise: false</code></td></tr>
+  <tr><td>N+1検出結果</td><td><strong>0件</strong>（bullet.log 空）</td></tr>
+</table>
+<div class="success-box"><strong>結果:</strong> 全292テスト実行後、N+1クエリは検出されなかった。既存コードは適切にクエリを構成している。今後のコード変更でN+1が発生した場合は自動的に検出される。</div>
+
+<h3>3. MediaProcessor テスト（19テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/services/interview_engine/media_processor_spec.rb</code></p>
+<table>
+  <tr><th>メソッド</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td><code>.extract_audio_from_video</code></td><td>8</td><td>正常抽出、ファイル不存在、空ファイル、サイズ超過、ffmpeg未インストール、ffmpeg失敗、タイムアウト、空音声出力</td></tr>
+  <tr><td><code>.audio_duration</code></td><td>3</td><td>正常取得、ファイル不存在、ffprobe失敗</td></tr>
+  <tr><td><code>.validate_audio_duration!</code></td><td>4</td><td>正常、短すぎる、長すぎる、ffprobe不可時スキップ</td></tr>
+  <tr><td><code>.normalize_audio</code></td><td>4</td><td>正常正規化、ファイル不存在、ffmpeg失敗、タイムアウト</td></tr>
+</table>
+<div class="info-box"><strong>モック方式:</strong> <code>Open3.capture3</code>をスタブ化してffmpeg/ffprobeの出力を再現。<code>@ffmpeg_available</code>キャッシュを各テスト前にリセット。</div>
+
+<h3>4. AudioInterviewService テスト（11テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/services/interview_engine/audio_interview_service_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td>テキスト回答</td><td>1</td><td>そのまま返す</td></tr>
+  <tr><td>音声ファイル</td><td>2</td><td>正常トランスクリプト、空トランスクリプトエラー</td></tr>
+  <tr><td>動画ファイル</td><td>1</td><td>動画→音声抽出→STT→テキスト</td></tr>
+  <tr><td>入力なし</td><td>1</td><td>AudioError発生</td></tr>
+  <tr><td><code>#prepare_question</code></td><td>1</td><td>QuestionSelector委譲</td></tr>
+  <tr><td><code>#cleanup_temp_files</code></td><td>3</td><td>正常削除、nilスキップ、不存在スキップ</td></tr>
+  <tr><td><code>.pregenerate_question_audio</code></td><td>2</td><td>TTS呼び出し、TTS失敗時安全</td></tr>
+</table>
+
+<h3>5. EvaluateInterviewResponseJob テスト（8テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/jobs/evaluate_interview_response_job_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td><code>#perform</code></td><td>4</td><td>Evaluator呼び出し、言語設定、テストモード実行、不存在ID</td></tr>
+  <tr><td>キュー設定</td><td>1</td><td>defaultキュー確認</td></tr>
+  <tr><td>enqueue</td><td>2</td><td>perform_later登録、キュー指定</td></tr>
+  <tr><td>リトライ設定</td><td>1</td><td>retry_on設定確認</td></tr>
+</table>
+
+<h3>6. バグ修正（2件）</h3>
+<h4>6.1 MediaProcessor: private_class_method 配置ミス</h4>
+<p><strong>問題:</strong> <code>private_class_method</code>がメソッド定義の<strong>前</strong>に配置されており、テスト環境（eager_load: false）でNameErrorが発生。</p>
+<p><strong>修正:</strong> メソッド定義の<strong>後</strong>に移動。</p>
+
+<h4>6.2 AudioInterviewService: 未定義定数参照</h4>
+<p><strong>問題:</strong> <code>STTClient::MAX_FILE_SIZE</code>が未定義。</p>
+<p><strong>修正:</strong> <code>Rails.application.config.interview.stt_max_file_size</code>に変更。</p>
+
+<!-- ===== Day 16 ===== -->
+<h2 class="day-title">Day 16: Rack::Attackレート制限導入・Admin/Clientテスト</h2>
+
+<h3>7. 概要</h3>
+<p>本番環境のセキュリティ強化として<strong>Rack::Attack</strong>によるAPIレート制限を導入。併せて未テストだった<strong>Admin/Client管理画面コントローラー</strong>のテストを追加し、認証・認可の網羅的な検証を実現した。テスト総数は292→316（+24テスト）。</p>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="num">316</div><div class="lbl">テスト全件パス</div></div>
+  <div class="stat-box"><div class="num">+24</div><div class="lbl">新規テスト追加</div></div>
+  <div class="stat-box"><div class="num">6</div><div class="lbl">レート制限ルール</div></div>
+  <div class="stat-box" style="background: linear-gradient(135deg, #c6f6d5, #9ae6b4);"><div class="num">429</div><div class="lbl">API保護レスポンス</div></div>
+</div>
+
+<h3>8. Rack::Attack レート制限導入</h3>
+<table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>Gem</td><td><code>rack-attack 6.8.0</code></td></tr>
+  <tr><td>設定ファイル</td><td><code>config/initializers/rack_attack.rb</code></td></tr>
+  <tr><td>キャッシュ</td><td><code>ActiveSupport::Cache::MemoryStore</code>（本番ではRedis推奨）</td></tr>
+</table>
+
+<h4>レート制限ルール一覧</h4>
+<table>
+  <tr><th>ルール</th><th>対象</th><th>制限</th><th>目的</th></tr>
+  <tr><td><code>api/global</code></td><td><code>/api/*</code> 全体</td><td>60 req/min/IP</td><td>API全体の保護</td></tr>
+  <tr><td><code>api/interviews/start</code></td><td><code>POST /start</code></td><td>10 req/min/IP</td><td>面接乱用防止</td></tr>
+  <tr><td><code>api/interviews/start_by_token</code></td><td><code>POST /start_by_token</code></td><td>20 req/min/IP</td><td>トークン総当たり防止</td></tr>
+  <tr><td><code>api/interviews/submit_answer</code></td><td><code>POST /submit_answer</code></td><td>30 req/min/IP</td><td>アップロード制限</td></tr>
+  <tr><td><code>api/interviews/complete</code></td><td><code>POST /complete</code></td><td>10 req/min/IP</td><td>完了乱用防止</td></tr>
+  <tr><td><code>auth/login</code></td><td>Devise <code>sign_in</code></td><td>10 req/min/IP</td><td>ブルートフォース防止</td></tr>
+</table>
+
+<h4>セキュリティ機能</h4>
+<ul>
+  <li><strong>ホワイトリスト:</strong> localhost（127.0.0.1, ::1）は制限除外</li>
+  <li><strong>ブロックリスト:</strong> <code>ENV['BLOCKED_IPS']</code> で明示的なIP拒否</li>
+  <li><strong>429レスポンス:</strong> JSON + <code>Retry-After</code>, <code>X-RateLimit-*</code> ヘッダー</li>
+  <li><strong>403レスポンス:</strong> ブロックIPに対するJSON形式レスポンス</li>
+</ul>
+
+<h3>9. レート制限テスト（10テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/requests/api/rate_limiting_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td>API全体レート制限</td><td>2</td><td>制限内OK、制限超過429</td></tr>
+  <tr><td>面接開始レート制限</td><td>2</td><td>10回内OK、11回目429</td></tr>
+  <tr><td>トークン開始レート制限</td><td>1</td><td>21回目429</td></tr>
+  <tr><td>429レスポンスフォーマット</td><td>3</td><td>JSON形式、Retry-After、X-RateLimitヘッダー</td></tr>
+  <tr><td>IPブロックリスト</td><td>1</td><td>ブロックIP→403</td></tr>
+  <tr><td>localhostセーフリスト</td><td>1</td><td>セーフリスト時制限なし</td></tr>
+</table>
+
+<h3>10. Admin::InterviewResults テスト（7テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/requests/admin/interview_results_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td><code>GET /admin/interview_results</code></td><td>5</td><td>Admin認証OK、複数結果表示、未認証リダイレクト、Client認証拒否、User認証拒否</td></tr>
+  <tr><td><code>GET /admin/interview_results/:id</code></td><td>2</td><td>詳細表示OK、存在しないID 404</td></tr>
+</table>
+
+<h3>11. Client::InterviewResults テスト（6テスト）</h3>
+<p><strong>ファイル:</strong> <code>spec/requests/client/interview_results_spec.rb</code></p>
+<table>
+  <tr><th>カテゴリ</th><th>テスト数</th><th>内容</th></tr>
+  <tr><td><code>GET /client/interview_results</code></td><td>3</td><td>Client認証OK、未認証リダイレクト、User認証拒否</td></tr>
+  <tr><td><code>GET /client/interview_results/:id</code></td><td>3</td><td>自分の結果OK、他Clientの結果RecordNotFound、未認証リダイレクト</td></tr>
+</table>
+
+<div class="info-box"><strong>認可テスト:</strong> Client間のデータ分離を確認。Client AがClient Bの面接結果にアクセスすると<code>ActiveRecord::RecordNotFound</code>（<code>where(client_id: current_client.id)</code>フィルタリングによる保護）。</div>
+
+<!-- ===== まとめ ===== -->
+<h2 class="day-title">まとめ</h2>
+
+<h3>12. テスト結果サマリー（Day 15→16 推移）</h3>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="num">96</div><div class="lbl">Day 13<br>(Phase 3 完了)</div></div>
+  <div class="stat-box"><div class="num">254</div><div class="lbl">Day 14<br>(Service層開始)</div></div>
+  <div class="stat-box"><div class="num">292</div><div class="lbl">Day 15<br>(Service層完了)</div></div>
+  <div class="stat-box" style="background: linear-gradient(135deg, #c6f6d5, #9ae6b4);"><div class="num">316</div><div class="lbl">Day 16<br>(セキュリティ強化)</div></div>
+</div>
+
+<h4>カバレッジ比較</h4>
+<table>
+  <tr><th>対象</th><th>Day 14</th><th>Day 15</th><th>Day 16</th></tr>
+  <tr><td>Service層</td><td>9/12 (75%)</td><td><span class="badge badge-green">12/12 (100%)</span></td><td><span class="badge badge-green">12/12 (100%)</span></td></tr>
+  <tr><td>API層</td><td>31テスト</td><td>31テスト</td><td><strong>41テスト</strong></td></tr>
+  <tr><td>管理画面</td><td>—</td><td>—</td><td><strong>Admin 7 + Client 6</strong></td></tr>
+  <tr><td>Job層</td><td>—</td><td><strong>8テスト</strong></td><td>8テスト</td></tr>
+  <tr><td>N+1検出</td><td>—</td><td><span class="badge badge-green">Bullet導入</span></td><td>導入済</td></tr>
+  <tr><td>レート制限</td><td>—</td><td>—</td><td><span class="badge badge-green">Rack::Attack 6ルール</span></td></tr>
+  <tr><td>全テスト</td><td>254</td><td>292</td><td><strong>316</strong></td></tr>
+</table>
+
+<h4>Service層テスト完了一覧</h4>
+<table>
+  <tr><th>Service</th><th>テスト数</th><th>追加Day</th><th>状態</th></tr>
+  <tr><td>SessionManager</td><td>25</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>ResponseEvaluator</td><td>12</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>QuestionSelector</td><td>16</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>RejectJudge</td><td>16</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>LLMClient</td><td>10</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>STTClient</td><td>11</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>TTSClient</td><td>11</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>ResponseValidator</td><td>13</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>PromptTemplate</td><td>10</td><td>Day 14</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>MediaProcessor</td><td>19</td><td>Day 15</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>AudioInterviewService</td><td>11</td><td>Day 15</td><td><span class="badge badge-green">完了</span></td></tr>
+  <tr><td>EvaluateInterviewResponseJob</td><td>8</td><td>Day 15</td><td><span class="badge badge-green">完了</span></td></tr>
+</table>
+
+<h3>13. 変更ファイル一覧</h3>
+
+<h4>Day 15 新規作成（3件）</h4>
+<div class="file-list">
+  <div class="file-item"><div class="fname">spec/services/interview_engine/media_processor_spec.rb</div><div class="fdesc">MediaProcessor テスト（19テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/services/interview_engine/audio_interview_service_spec.rb</div><div class="fdesc">AudioInterviewService テスト（11テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/jobs/evaluate_interview_response_job_spec.rb</div><div class="fdesc">EvaluateInterviewResponseJob テスト（8テスト）</div></div>
+</div>
+
+<h4>Day 15 修正（5件）</h4>
+<table>
+  <tr><th>ファイル</th><th>変更内容</th></tr>
+  <tr><td><code>Gemfile</code></td><td><code>bullet</code> gem追加</td></tr>
+  <tr><td><code>config/environments/development.rb</code></td><td>Bullet設定追加</td></tr>
+  <tr><td><code>config/environments/test.rb</code></td><td>Bullet設定追加</td></tr>
+  <tr><td><code>app/services/interview_engine/media_processor.rb</code></td><td><code>private_class_method</code> 配置修正</td></tr>
+  <tr><td><code>app/services/interview_engine/audio_interview_service.rb</code></td><td><code>MAX_FILE_SIZE</code> → <code>config.stt_max_file_size</code></td></tr>
+</table>
+
+<h4>Day 16 新規作成（5件）</h4>
+<div class="file-list">
+  <div class="file-item"><div class="fname">config/initializers/rack_attack.rb</div><div class="fdesc">Rack::Attack レート制限設定</div></div>
+  <div class="file-item"><div class="fname">spec/requests/api/rate_limiting_spec.rb</div><div class="fdesc">レート制限テスト（10テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/requests/admin/interview_results_spec.rb</div><div class="fdesc">Admin管理画面テスト（7テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/requests/client/interview_results_spec.rb</div><div class="fdesc">Client管理画面テスト（6テスト）</div></div>
+  <div class="file-item"><div class="fname">spec/factories/admins.rb</div><div class="fdesc">Admin Factory</div></div>
+</div>
+
+<h4>Day 16 修正（1件）</h4>
+<table>
+  <tr><th>ファイル</th><th>変更内容</th></tr>
+  <tr><td><code>Gemfile</code></td><td><code>rack-attack</code> gem追加</td></tr>
+</table>
+
+<h3>14. セットアップ手順</h3>
+<div class="code-block">
+# 1. Gem インストール（production除外）
+bundle config set --local without production
+bundle install
+
+# 2. DB作成・マイグレーション
+bundle exec rails db:create
+bundle exec rails db:migrate
+
+# 3. テスト用DB
+RAILS_ENV=test bundle exec rails db:create db:migrate
+
+# 4. テスト実行
+bundle exec rspec
+
+# 5. 詳細レポート
+bundle exec rspec --format documentation
+</div>
+
+<div class="success-box">
+  <strong>Day 15:</strong> Service層テスト100%達成（12/12）、Bullet gem導入、バグ2件修正。テスト254→292（+38）。<br>
+  <strong>Day 16:</strong> Rack::Attackレート制限導入（6ルール）、Admin/Clientテスト追加。テスト292→316（+24）。全316テストがパス。
+</div>
+
+<footer>
+  AI面接インタビューシステム — Day 15・Day 16 統合報告書 | 2026-03-20 | master ブランチ
+</footer>
+
+</body>
+</html>

@@ -216,4 +216,99 @@ RSpec.describe Interview, type: :model do
       expect(interview.errors[:situation]).to include('must have at least 1 question')
     end
   end
+
+  describe '#touch_activity!' do
+    it 'updates last_activity_at' do
+      interview = create(:interview, :in_progress, user: user, situation: situation)
+      old_activity = interview.last_activity_at
+
+      travel_to 5.minutes.from_now do
+        interview.touch_activity!
+        expect(interview.last_activity_at).to be > old_activity
+      end
+    end
+  end
+
+  describe '#remaining_seconds' do
+    it 'returns remaining seconds for active interview' do
+      interview = create(:interview, :in_progress, user: user, situation: situation)
+      # session_timeout_minutes = 60 (default)
+      remaining = interview.remaining_seconds
+      expect(remaining).to be > 0
+      expect(remaining).to be <= 3600
+    end
+
+    it 'returns 0 when timed out' do
+      interview = create(:interview, :in_progress, user: user, situation: situation)
+      interview.update_column(:last_activity_at, 2.hours.ago)
+      expect(interview.remaining_seconds).to eq(0)
+    end
+
+    it 'returns nil when not in_progress' do
+      interview = create(:interview, user: user, situation: situation)
+      expect(interview.remaining_seconds).to be_nil
+    end
+  end
+
+  describe '#answered_question_count' do
+    it 'returns count of responses' do
+      interview = create(:interview, :in_progress, user: user, situation: situation)
+      q1 = situation.questions.first
+      q2 = situation.questions.second
+      create(:interview_response, interview: interview, question: q1)
+      create(:interview_response, interview: interview, question: q2)
+
+      expect(interview.answered_question_count).to eq(2)
+    end
+  end
+
+  describe '#total_questions' do
+    it 'returns total question count from situation' do
+      interview = create(:interview, user: user, situation: situation)
+      expect(interview.total_questions).to eq(3)
+    end
+  end
+
+  describe 'scopes' do
+    describe '.by_user_and_situation' do
+      it 'filters by user and situation' do
+        interview = create(:interview, user: user, situation: situation)
+        expect(Interview.by_user_and_situation(user, situation)).to include(interview)
+      end
+    end
+
+    describe '.completed_or_failed' do
+      it 'returns completed and failed interviews' do
+        completed = create(:interview, :completed, user: user, situation: situation)
+        user2 = create(:user)
+        situation2 = create(:situation, :with_questions, client: client)
+        failed = create(:interview, :failed, user: user2, situation: situation2)
+        user3 = create(:user)
+        situation3 = create(:situation, :with_questions, client: client)
+        in_progress = create(:interview, :in_progress, user: user3, situation: situation3)
+
+        results = Interview.completed_or_failed
+        expect(results).to include(completed, failed)
+        expect(results).not_to include(in_progress)
+      end
+    end
+
+    describe '.by_token' do
+      it 'finds interview by access token' do
+        interview = create(:interview, user: user, situation: situation)
+        expect(Interview.by_token(interview.access_token).first).to eq(interview)
+      end
+    end
+  end
+
+  describe 'ensure_no_previous_interview' do
+    it 'rejects when user already completed the same situation' do
+      create(:interview, :completed, user: user, situation: situation)
+      user2 = create(:user)
+      situation2 = create(:situation, :with_questions, client: client)
+      # 同じユーザー+別シナリオは可
+      interview = build(:interview, user: user, situation: situation2)
+      expect(interview).to be_valid
+    end
+  end
 end

@@ -81,7 +81,7 @@ class Column < ApplicationRecord
 
 def assign_random_file
   return if self.file.present?
-  target_genre = self.genre.presence || self.service_type.presence
+  target_genre = self.genre.presence || (self.respond_to?(:service_type) ? self.service_type.presence : nil)
   return unless CATEGORY_IMAGES[target_genre].present?
 
   file_name = CATEGORY_IMAGES[target_genre].sample

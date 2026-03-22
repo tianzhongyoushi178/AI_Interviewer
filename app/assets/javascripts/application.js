@@ -355,5 +355,4 @@ const mountDataTargetNav = () => {
   });
 };
 
-if (window.Turbo) document.addEventListener('turbo:load', mountDataTargetNav);
-else document.addEventListener('DOMContentLoaded', mountDataTargetNav);
+document.addEventListener('turbolinks:load', mountDataTargetNav);

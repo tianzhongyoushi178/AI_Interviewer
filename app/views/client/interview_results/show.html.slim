@@ -1,45 +1,59 @@
-h1 Interview Result ##{@result.id}
+.admin-container
+  .admin-header
+    div
+      h1.admin-title 面接結果詳細
+      p.admin-subtitle= "結果 ##{@result.id}"
+    = link_to '一覧に戻る', client_interview_results_path, class: 'btn-secondary-custom'
 
-p
-  strong Applicant:
-  = @result.interview.user&.email
-p
-  strong Situation:
-  = @result.interview.situation&.title
-p
-  strong Status:
-  = @result.final_status
-p
-  strong Average Score:
-  = @result.average_score
+  .result-card
+    h3 基本情報
+    dl.detail-grid
+      dt 応募者
+      dd= @result.interview.user&.email
+      dt 面接フォーム
+      dd= @result.interview.situation&.title
+      dt ステータス
+      dd
+        - case @result.final_status
+        - when "passed"
+          span.status-badge.status-badge--pass 合格
+        - when "failed"
+          span.status-badge.status-badge--fail 不合格
+        - else
+          span.status-badge.status-badge--progress= @result.final_status
 
-h2 Summary
-p= @result.summary
+  .result-card style="text-align: center;"
+    h3 平均スコア
+    .score-display= @result.average_score
 
-h3 Strengths
-ul
-  - Array(@result.strengths).each do |item|
-    li= item
+  .result-card
+    h3 要約
+    p style="font-size:14px; color:#333; line-height:1.8;"= @result.summary
 
-h3 Weaknesses
-ul
-  - Array(@result.weaknesses).each do |item|
-    li= item
+  .result-card
+    h3 強み
+    ul.list-styled
+      - Array(@result.strengths).each do |item|
+        li= item
 
-h3 Recommendation
-p= @result.recommendation
+  .result-card
+    h3 弱み
+    ul.list-styled
+      - Array(@result.weaknesses).each do |item|
+        li= item
 
-h2 Responses
-ul
+  .result-card
+    h3 推薦コメント
+    p style="font-size:14px; color:#333; line-height:1.8;"= @result.recommendation
+
+  h2.admin-title style="font-size: 22px; margin-top: 32px;" 回答一覧
   - @result.interview.interview_responses.in_order.each do |resp|
-    li
+    .response-item
       strong= resp.question.question_text
-      |  — Score: #{resp.score}
-      br
-      | Answer: #{resp.audio_transcript}
-      - if resp.answer_audio.attached?
-        br
-        = link_to 'Audio', rails_blob_path(resp.answer_audio, disposition: 'attachment', only_path: true)
-      - if resp.answer_video.attached?
-        br
-        = link_to 'Video', rails_blob_path(resp.answer_video, disposition: 'attachment', only_path: true)
+      span.response-score= "スコア: #{resp.score}"
+      .response-transcript= resp.audio_transcript
+      .response-media
+        - if resp.answer_audio.attached?
+          = link_to '音声をダウンロード', rails_blob_path(resp.answer_audio, disposition: 'attachment', only_path: true)
+        - if resp.answer_video.attached?
+          = link_to '動画をダウンロード', rails_blob_path(resp.answer_video, disposition: 'attachment', only_path: true)

@@ -1,4 +1,5 @@
-/ app/views/situations/edit.html.slim
-h1 面接フォームを編集
-= render 'form'
-= link_to '一覧に戻る', situations_path, class: 'btn btn-secondary mt-2'
+.admin-container
+  h1.admin-title 面接フォームを編集
+  p.admin-subtitle フォーム情報を編集できます
+  = render 'form'
+  = link_to '一覧に戻る', situations_path, class: 'btn-secondary-custom mt-2'

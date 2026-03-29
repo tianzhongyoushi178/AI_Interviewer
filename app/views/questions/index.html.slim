@@ -1,24 +1,28 @@
-/ app/views/questions/index.html.slim
-h1 質問一覧: #{@situation.title}
+.admin-container
+  .admin-header
+    div
+      h1.admin-title 質問一覧
+      p.admin-subtitle= @situation.title
+    = link_to '新しい質問', new_situation_question_path(@situation), class: 'btn-primary-custom'
 
-= link_to '新しい質問', new_situation_question_path(@situation), class: 'btn btn-primary mb-3'
-
-table.table.table-striped
-  thead
-    tr
-      th 順序
-      th 質問内容
-      th タイプ
-      th 選択肢
-      th 操作
-  tbody
-    - @questions.each do |q|
-      tr
-        td= q.order
-        td= q.question_text
-        td= q.question_type
-        td= q.options
-        td
-          = link_to '表示', situation_question_path(@situation, q), class: 'btn btn-sm btn-info'
-          = link_to '編集', edit_situation_question_path(@situation, q), class: 'btn btn-sm btn-warning'
-          = link_to '削除', situation_question_path(@situation, q), method: :delete, data: { confirm: '本当に削除しますか？' }, class: 'btn btn-sm btn-danger'
+  .admin-card
+    table.admin-table
+      thead
+        tr
+          th 順序
+          th 質問内容
+          th タイプ
+          th 選択肢
+          th 操作
+      tbody
+        - @questions.each do |q|
+          tr
+            td= q.order
+            td= q.question_text
+            td= q.question_type
+            td= q.options
+            td
+              .admin-actions
+                = link_to '表示', situation_question_path(@situation, q), class: 'btn-primary-custom btn-sm'
+                = link_to '編集', edit_situation_question_path(@situation, q), class: 'btn-secondary-custom btn-sm'
+                = link_to '削除', situation_question_path(@situation, q), method: :delete, data: { confirm: '本当に削除しますか？' }, class: 'btn-danger-custom btn-sm'

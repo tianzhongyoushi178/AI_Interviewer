@@ -1,4 +1,5 @@
-/ app/views/questions/new.html.slim
-h1 新しい質問を作成
-= render 'form'
-= link_to '戻る', situation_questions_path(@situation), class: 'btn btn-secondary mt-2'
+.admin-container
+  h1.admin-title 新しい質問を作成
+  p.admin-subtitle 面接の質問を追加します
+  = render 'form'
+  = link_to '戻る', situation_questions_path(@situation), class: 'btn-secondary-custom mt-2'

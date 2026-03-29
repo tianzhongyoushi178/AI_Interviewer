@@ -1,22 +1,23 @@
-.auth-wrapper
-  .auth-forms
-    .auth-card
-      h2 Log in
-      = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
-        .field
-          = f.label :email
-          = f.email_field :email, autofocus: true, autocomplete: "email", class: "input-field"
+.auth-container
+  .auth-card-custom
+    h2.auth-title ログイン
+    p.auth-subtitle クライアントとしてログイン
+    = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
+      .form-group-custom
+        = f.label :email, 'メールアドレス'
+        = f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "example@mail.com"
 
-        .field
-          = f.label :password
-          = f.password_field :password, autocomplete: "current-password", class: "input-field"
+      .form-group-custom
+        = f.label :password, 'パスワード'
+        = f.password_field :password, autocomplete: "current-password"
 
-        - if devise_mapping.rememberable?
-          .field.remember
-            = f.check_box :remember_me
-            = f.label :remember_me
+      - if devise_mapping.rememberable?
+        .form-check-custom
+          = f.check_box :remember_me
+          = f.label :remember_me, 'ログインを記憶'
 
-        .actions
-          = f.submit "Log in", class: "btn btn-primary"
+      .form-group-custom
+        = f.submit "ログイン", class: "btn-primary-custom w-100"
 
+    .auth-links
       = render "clients/shared/links"

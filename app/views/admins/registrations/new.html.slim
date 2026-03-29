@@ -1,26 +1,26 @@
-.auth-wrapper
-  .auth-forms
-    / Sign Up Form
-    .auth-card
-      h2 Sign up
-      = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
-        = render "admins/shared/error_messages", resource: resource
+.auth-container
+  .auth-card-custom
+    h2.auth-title 新規登録
+    p.auth-subtitle 管理者アカウントを作成
+    = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
+      = render "admins/shared/error_messages", resource: resource
 
-        .field
-          = f.label :email
-          = f.email_field :email, autofocus: true, autocomplete: "email", class: "input-field"
+      .form-group-custom
+        = f.label :email, 'メールアドレス'
+        = f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "admin@mail.com"
 
-        .field
-          = f.label :password
-          - if @minimum_password_length
-            em= "(#{@minimum_password_length} characters minimum)"
-          = f.password_field :password, autocomplete: "new-password", class: "input-field"
+      .form-group-custom
+        = f.label :password, 'パスワード'
+        - if @minimum_password_length
+          span.hint= "(#{@minimum_password_length}文字以上)"
+        = f.password_field :password, autocomplete: "new-password"
 
-        .field
-          = f.label :password_confirmation
-          = f.password_field :password_confirmation, autocomplete: "new-password", class: "input-field"
+      .form-group-custom
+        = f.label :password_confirmation, 'パスワード（確認）'
+        = f.password_field :password_confirmation, autocomplete: "new-password"
 
-        .actions
-          = f.submit "Sign up", class: "btn btn-primary"
+      .form-group-custom
+        = f.submit "新規登録", class: "btn-primary-custom w-100"
 
+    .auth-links
       = render "admins/shared/links"

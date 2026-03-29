@@ -4,6 +4,7 @@ module InterviewEngine
     def initialize(interview)
       @interview = interview
       @situation = interview.situation
+      @preloaded_responses = interview.interview_responses.includes(:question).to_a
     end
 
     # Get next eligible question (considering branching rules)
@@ -63,12 +64,17 @@ module InterviewEngine
 
     # Unanswered questions filtered by branching rules
     def eligible_questions
-      unanswered_questions.select { |q| evaluate_branching_rules(q) }
+      @eligible_questions ||= unanswered_questions.select { |q| evaluate_branching_rules(q) }
+    end
+
+    # Reset memoized cache (call after a new response is submitted)
+    def reset_cache!
+      @eligible_questions = nil
     end
 
     # Total count of eligible questions (answered + remaining eligible)
     def total_eligible_count
-      answered_count = @interview.interview_responses.count
+      answered_count = @preloaded_responses.size
       answered_count + eligible_questions.size
     end
 
@@ -122,31 +128,33 @@ module InterviewEngine
       end
     end
 
-    # Find InterviewResponse by question order number
+    # Find InterviewResponse by question order number (メモリ上で検索)
     def find_response_for_question_order(order)
-      question = @situation.questions.find_by(order: order)
-      return nil unless question
-
-      @interview.interview_responses.find_by(question: question)
+      @preloaded_responses.find { |r| r.question.order == order }
     end
 
     def ensure_question_audio(question, language)
       record = QuestionAudio.find_or_initialize_by(question: question, language: language)
       return record if record.audio.attached?
 
-      tts_client = TTSClient.new
-      audio_path = tts_client.speak(question.question_text, language: language)
-      return record if audio_path.nil?
+      begin
+        tts_client = TTSClient.new
+        audio_path = tts_client.speak(question.question_text, language: language)
+        return record if audio_path.nil?
 
-      File.open(audio_path, 'rb') do |file|
-        record.audio.attach(
-          io: file,
-          filename: File.basename(audio_path),
-          content_type: 'audio/mpeg'
-        )
+        File.open(audio_path, 'rb') do |file|
+          record.audio.attach(
+            io: file,
+            filename: File.basename(audio_path),
+            content_type: 'audio/mpeg'
+          )
+        end
+
+        record.save!
+      rescue => e
+        Rails.logger.error("TTS音声生成に失敗しました (Question ##{question.id}): #{e.message}")
       end
 
-      record.save!
       record
     end
 

@@ -1,19 +1,56 @@
 = form_with model: @situation, local: true do |f|
-  .field
-    = f.label :title
-    = f.text_field :title
+  .admin-card
+    .form-group-custom
+      = f.label :title, 'タイトル'
+      = f.text_field :title
 
-  .field
-    = f.label :description
-    = f.text_area :description
+    .form-group-custom
+      = f.label :description, '説明'
+      = f.text_area :description, rows: 4
 
-  .field
-    = f.label :language
-    = f.select :language, options_for_select([['English', 'en'], ['日本語', 'ja']], @situation.language), {}, class: 'form-control'
+    .form-group-custom
+      = f.label :language, '言語'
+      = f.select :language, options_for_select([['English', 'en'], ['日本語', 'ja']], @situation.language), {}
 
-  .field
-    = f.label :archived
-    = f.check_box :archived
+    .form-check-custom
+      = f.check_box :archived
+      = f.label :archived, 'アーカイブ'
 
-  .actions
-    = f.submit "Save"
+    .form-group-custom
+      = f.label :passing_score, '合格点'
+      = f.number_field :passing_score, value: (@situation.passing_score || 70)
+
+    .form-group-custom
+      = f.label :session_timeout_minutes, '制限時間（分）'
+      = f.number_field :session_timeout_minutes, value: (@situation.session_timeout_minutes || 60)
+
+    .form-check-custom
+      = f.check_box :allow_resume
+      = f.label :allow_resume, '中断再開を許可'
+
+    .form-group-custom
+      = f.label :max_resume_count, '最大再開回数'
+      = f.number_field :max_resume_count, value: (@situation.max_resume_count || 3)
+
+    .form-check-custom
+      = f.check_box :auto_reject_enabled
+      = f.label :auto_reject_enabled, '自動不合格'
+
+    .form-check-custom
+      = f.check_box :reject_on_required_fail
+      = f.label :reject_on_required_fail, '必須質問不合格で即不合格'
+
+    .form-group-custom
+      = f.label :min_required_score, '最低必須スコア'
+      = f.number_field :min_required_score, value: (@situation.min_required_score || 70)
+
+    .form-group-custom
+      = f.label :max_consecutive_fails, '連続不合格上限'
+      = f.number_field :max_consecutive_fails, value: (@situation.max_consecutive_fails || 0)
+
+    .form-group-custom
+      = f.label :reject_notify_method, '不合格通知方法'
+      = f.select :reject_notify_method, options_for_select([['アプリ内通知', 'in_app'], ['メール', 'email']], @situation.reject_notify_method), {}
+
+    .form-group-custom
+      = f.submit "保存", class: "btn-primary-custom"

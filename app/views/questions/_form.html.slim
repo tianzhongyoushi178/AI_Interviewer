@@ -1,34 +1,124 @@
-/ app/views/questions/_form.html.slim
+- choices = @question.parsed_options.is_a?(Hash) ? (@question.parsed_options['choices'] || @question.parsed_options[:choices] || []) : []
+- correct = @question.parsed_options.is_a?(Hash) ? (@question.parsed_options['correct'] || @question.parsed_options[:correct] || '') : ''
+- rules = @question.parsed_branching_rules || {}
+- conditions = rules[:conditions] || rules['conditions'] || []
+- default_action = rules[:default_action] || rules['default_action'] || 'skip'
+
 = form_with model: [@situation, @question], local: true do |f|
-  .form-group
-    = f.label :question_text, '質問内容'
-    = f.text_area :question_text, class: 'form-control', rows: 3
+  .admin-card
+    .form-group-custom
+      = f.label :question_text, '質問内容'
+      = f.text_area :question_text, rows: 3
 
-  .form-group
-    = f.label :question_type, '質問タイプ'
-    = f.select :question_type, options_for_select([['テキスト', 'text'], ['選択肢', 'choice']], @question.question_type), {}, class: 'form-control'
+    .form-group-custom
+      = f.label :question_type, '質問タイプ'
+      = f.select :question_type, options_for_select([['テキスト', 'text'], ['選択肢', 'choice']], @question.question_type), {}, id: 'question_type_select'
 
-  .form-group
-    = f.label :options, '選択肢（choice の場合のみ, JSON形式で入力）'
-    = f.text_area :options, class: 'form-control', rows: 2, placeholder: '{"choices":["選択肢1","選択肢2"],"correct":"選択肢1"}'
+    #choices-section style=("display:none" unless @question.question_type == 'choice')
+      .form-group-custom
+        label 選択肢
+        #choices-list
+          - choices.each_with_index do |choice, i|
+            .choice-row style="display:flex; gap:8px; margin-bottom:6px; align-items:center;"
+              input.choice-input type="text" name="question[choices][]" value="#{choice}" placeholder="選択肢#{i+1}" style="flex:1;"
+              button.btn-remove-choice type="button" onclick="this.parentElement.remove()" style="background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;" ✕
+          - if choices.empty?
+            .choice-row style="display:flex; gap:8px; margin-bottom:6px; align-items:center;"
+              input.choice-input type="text" name="question[choices][]" placeholder="選択肢1" style="flex:1;"
+              button.btn-remove-choice type="button" onclick="this.parentElement.remove()" style="background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;" ✕
+        button#add-choice-btn type="button" style="margin-top:4px; background:#3498db; color:#fff; border:none; border-radius:4px; padding:6px 14px; cursor:pointer;" ＋ 選択肢を追加
 
-  .form-group
-    = f.label :order, '表示順'
-    = f.number_field :order, class: 'form-control'
+      .form-group-custom
+        = label_tag 'question_correct', '正解の選択肢（任意）'
+        = text_field_tag 'question[correct]', correct, placeholder: '正解の選択肢テキストを入力', style: 'width:100%;'
 
-  .form-group
-    .form-check
-      = f.check_box :required, class: 'form-check-input'
-      = f.label :required, '必須質問', class: 'form-check-label'
+    .form-group-custom
+      = f.label :order, '表示順'
+      = f.number_field :order
 
-  .form-group
-    = f.label :category, 'カテゴリ'
-    = f.text_field :category, class: 'form-control', placeholder: '例: 技術, コミュニケーション, リーダーシップ'
+    .form-check-custom
+      = f.check_box :required
+      = f.label :required, '必須質問'
 
-  .form-group
-    = f.label :branching_rules, '分岐ルール（JSON形式）'
-    = f.text_area :branching_rules, class: 'form-control', rows: 4, placeholder: '{"conditions":[{"source_question_order":1,"type":"selected_option","value":"Python","action":"include"}],"default_action":"skip"}'
-    small.form-text.text-muted
-      | type: selected_option / score_above / score_below / answered　action: include / skip
+    .form-group-custom
+      = f.label :category, 'カテゴリ'
+      = f.text_field :category, placeholder: '例: 技術, コミュニケーション, リーダーシップ'
 
-  = f.submit class: 'btn btn-primary'
+    .form-group-custom
+      label 分岐ルール（任意）
+      #branching-conditions
+        - conditions.each_with_index do |cond, i|
+          .condition-row style="border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:8px; background:#f9f9f9;"
+            .condition-fields style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"
+              label style="font-size:0.85em;" 参照質問の表示順:
+              input type="number" name="question[branching_conditions][#{i}][source_question_order]" value="#{cond[:source_question_order] || cond['source_question_order']}" style="width:60px;"
+              label style="font-size:0.85em;" 条件タイプ:
+              select name="question[branching_conditions][#{i}][type]"
+                - %w[selected_option score_above score_below answered].each do |t|
+                  option value="#{t}" selected=((cond[:type] || cond['type']) == t) = t
+              label style="font-size:0.85em;" 値:
+              input type="text" name="question[branching_conditions][#{i}][value]" value="#{cond[:value] || cond['value']}" placeholder="例: Python, 80" style="width:120px;"
+              label style="font-size:0.85em;" アクション:
+              select name="question[branching_conditions][#{i}][action]"
+                option value="include" selected=((cond[:action] || cond['action']) == 'include') include（含む）
+                option value="skip" selected=((cond[:action] || cond['action']) == 'skip') skip（スキップ）
+              button.btn-remove-condition type="button" onclick="this.closest('.condition-row').remove()" style="background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;" ✕
+      button#add-condition-btn type="button" style="margin-top:4px; background:#3498db; color:#fff; border:none; border-radius:4px; padding:6px 14px; cursor:pointer;" ＋ 条件を追加
+
+      .form-group-custom style="margin-top:8px;"
+        label style="font-size:0.85em;" デフォルトアクション:
+        select name="question[branching_default_action]"
+          option value="skip" selected=(default_action == 'skip') skip（スキップ）
+          option value="include" selected=(default_action == 'include') include（含む）
+
+    .form-group-custom
+      = f.submit '質問を保存', class: 'btn-primary-custom'
+
+javascript:
+  document.addEventListener('turbolinks:load', function() {
+    var typeSelect = document.getElementById('question_type_select');
+    var choicesSection = document.getElementById('choices-section');
+    if (typeSelect && choicesSection) {
+      typeSelect.addEventListener('change', function() {
+        choicesSection.style.display = this.value === 'choice' ? '' : 'none';
+      });
+    }
+
+    var addChoiceBtn = document.getElementById('add-choice-btn');
+    if (addChoiceBtn) {
+      addChoiceBtn.addEventListener('click', function() {
+        var list = document.getElementById('choices-list');
+        var count = list.querySelectorAll('.choice-row').length + 1;
+        var row = document.createElement('div');
+        row.className = 'choice-row';
+        row.style = 'display:flex; gap:8px; margin-bottom:6px; align-items:center;';
+        row.innerHTML = '<input class="choice-input" type="text" name="question[choices][]" placeholder="選択肢' + count + '" style="flex:1;">' +
+          '<button class="btn-remove-choice" type="button" onclick="this.parentElement.remove()" style="background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;">✕</button>';
+        list.appendChild(row);
+      });
+    }
+
+    var addConditionBtn = document.getElementById('add-condition-btn');
+    if (addConditionBtn) {
+      var condIndex = document.querySelectorAll('.condition-row').length;
+      addConditionBtn.addEventListener('click', function() {
+        var container = document.getElementById('branching-conditions');
+        var row = document.createElement('div');
+        row.className = 'condition-row';
+        row.style = 'border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:8px; background:#f9f9f9;';
+        row.innerHTML = '<div class="condition-fields" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">' +
+          '<label style="font-size:0.85em;">参照質問の表示順:</label>' +
+          '<input type="number" name="question[branching_conditions][' + condIndex + '][source_question_order]" style="width:60px;">' +
+          '<label style="font-size:0.85em;">条件タイプ:</label>' +
+          '<select name="question[branching_conditions][' + condIndex + '][type]"><option value="selected_option">selected_option</option><option value="score_above">score_above</option><option value="score_below">score_below</option><option value="answered">answered</option></select>' +
+          '<label style="font-size:0.85em;">値:</label>' +
+          '<input type="text" name="question[branching_conditions][' + condIndex + '][value]" placeholder="例: Python, 80" style="width:120px;">' +
+          '<label style="font-size:0.85em;">アクション:</label>' +
+          '<select name="question[branching_conditions][' + condIndex + '][action]"><option value="include">include（含む）</option><option value="skip">skip（スキップ）</option></select>' +
+          '<button class="btn-remove-condition" type="button" onclick="this.closest(\'.condition-row\').remove()" style="background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;">✕</button>' +
+          '</div>';
+        container.appendChild(row);
+        condIndex++;
+      });
+    }
+  });

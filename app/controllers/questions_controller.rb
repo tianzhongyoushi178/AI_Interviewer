@@ -40,7 +40,7 @@ class QuestionsController < ApplicationController
   private
 
   def set_situation
-    @situation = Situation.find(params[:situation_id])
+    @situation = current_client.situations.find(params[:situation_id])
   end
 
   def set_question
@@ -48,31 +48,53 @@ class QuestionsController < ApplicationController
   end
 
   def question_params
-    permitted = params.require(:question).permit(
-      :question_text, :question_type, :options, :order,
-      :required, :category, :branching_rules
+    raw = params.require(:question).permit(
+      :question_text, :question_type, :order,
+      :required, :category, :correct, :branching_default_action,
+      choices: [],
+      branching_conditions: {}
     )
-    parse_options_json(permitted)
-    parse_branching_rules_json(permitted)
+
+    build_options(raw)
+    build_branching_rules(raw)
+
+    raw.except(:choices, :correct, :branching_conditions, :branching_default_action)
   end
 
-  def parse_options_json(permitted)
-    raw = permitted[:options]
-    return permitted if raw.blank? || !raw.is_a?(String)
+  def build_options(permitted)
+    choices = (permitted[:choices] || []).reject(&:blank?)
+    correct = permitted[:correct].presence
 
-    permitted[:options] = JSON.parse(raw)
-    permitted
-  rescue JSON::ParserError
-    permitted
+    if choices.present?
+      opt = { 'choices' => choices }
+      opt['correct'] = correct if correct
+      permitted[:options] = opt
+    else
+      permitted[:options] = nil
+    end
   end
 
-  def parse_branching_rules_json(permitted)
-    raw = permitted[:branching_rules]
-    return permitted if raw.blank? || !raw.is_a?(String)
+  def build_branching_rules(permitted)
+    raw_conditions = permitted[:branching_conditions]
+    default_action = permitted[:branching_default_action] || 'skip'
 
-    permitted[:branching_rules] = JSON.parse(raw)
-    permitted
-  rescue JSON::ParserError
-    permitted
+    conditions = []
+    if raw_conditions.is_a?(ActionController::Parameters) || raw_conditions.is_a?(Hash)
+      raw_conditions.each_value do |cond|
+        next if cond['source_question_order'].blank? && cond['type'].blank?
+        conditions << {
+          'source_question_order' => cond['source_question_order'].to_i,
+          'type' => cond['type'],
+          'value' => cond['value'],
+          'action' => cond['action']
+        }
+      end
+    end
+
+    if conditions.present?
+      permitted[:branching_rules] = { 'conditions' => conditions, 'default_action' => default_action }
+    else
+      permitted[:branching_rules] = nil
+    end
   end
 end

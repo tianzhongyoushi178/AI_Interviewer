@@ -9,6 +9,14 @@ module InterviewEngine
     CLAUDE_URL = 'https://api.anthropic.com/v1/messages'
     RETRY_DELAY_BASE = 1 # seconds (exponential backoff)
 
+    # response_format: json_object をサポートするモデルのプレフィックス一覧
+    # gpt-4-turbo 以降 および gpt-4o 系が対応
+    JSON_OBJECT_SUPPORTED_MODELS = %w[gpt-4o gpt-4-turbo gpt-3.5-turbo].freeze
+
+    def self.json_object_supported?(model_name)
+      JSON_OBJECT_SUPPORTED_MODELS.any? { |prefix| model_name.start_with?(prefix) }
+    end
+
     class LLMError < StandardError; end
     class LLMTimeoutError < LLMError; end
     class LLMResponseError < LLMError; end
@@ -122,9 +130,12 @@ module InterviewEngine
           { role: 'user', content: prompt[:user] }
         ],
         temperature: config.llm_temperature,
-        max_tokens: config.llm_max_tokens,
-        response_format: { type: 'json_object' }
+        max_tokens: config.llm_max_tokens
       }
+
+      if self.class.json_object_supported?(config.openai_model)
+        body[:response_format] = { type: 'json_object' }
+      end
 
       request.body = body.to_json
       response = http.request(request)

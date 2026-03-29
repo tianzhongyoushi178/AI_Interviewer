@@ -43,10 +43,20 @@ class SituationsController < ApplicationController
   private
 
   def set_situation
-    @situation = Situation.find(params[:id])
+    if client_signed_in?
+      @situation = current_client.situations.find(params[:id])
+    else
+      @situation = Situation.find(params[:id])
+    end
   end
 
   def situation_params
-    params.require(:situation).permit(:title, :description, :language, :archived)
+    params.require(:situation).permit(
+      :title, :description, :language, :archived,
+      :passing_score, :allow_resume, :max_resume_count,
+      :session_timeout_minutes, :reject_notify_method,
+      :min_required_score, :max_consecutive_fails,
+      :auto_reject_enabled, :reject_on_required_fail
+    )
   end
 end

@@ -37,10 +37,14 @@ module InterviewEngine
         end
 
         # { ... } を抽出（最も外側のブレース）
-        json_match = raw_text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/)
-        if json_match
-          parsed = try_parse(json_match[0])
-          return parsed if parsed
+        begin
+          json_match = Timeout.timeout(2) { raw_text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/) }
+          if json_match
+            parsed = try_parse(json_match[0])
+            return parsed if parsed
+          end
+        rescue Timeout::Error
+          Rails.logger.warn("ResponseValidator#extract_json: regex timed out, skipping brace extraction")
         end
 
         nil

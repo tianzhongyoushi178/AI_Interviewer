@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Admins::RegistrationsController < Devise::RegistrationsController
+  before_action :check_registration_allowed, only: [:new, :create]
   # before_action :configure_sign_up_params, only: [:create]
   # before_action :configure_account_update_params, only: [:update]
 
@@ -37,6 +38,14 @@ class Admins::RegistrationsController < Devise::RegistrationsController
   # def cancel
   #   super
   # end
+
+  private
+
+  def check_registration_allowed
+    if Rails.env.production? && !ENV['ALLOW_ADMIN_REGISTRATION'].present?
+      redirect_to root_path, alert: '管理者登録は現在無効です'
+    end
+  end
 
   # protected
 

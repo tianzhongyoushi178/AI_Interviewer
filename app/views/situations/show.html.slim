@@ -1,34 +1,42 @@
-/ app/views/situations/show.html.slim
-h1 面接フォーム詳細: #{@situation.title}
+.admin-container
+  .admin-header
+    div
+      h1.admin-title= @situation.title
+      p.admin-subtitle 面接フォーム詳細
+    .admin-actions
+      = link_to '編集', edit_situation_path(@situation), class: 'btn-secondary-custom'
+      = link_to '一覧に戻る', situations_path, class: 'btn-secondary-custom'
 
-p
-  strong 説明:
-  = @situation.description
+  .admin-card
+    h3 style="font-size:16px; font-weight:600; color:#1a1a2e; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #e8eaf6;" 基本情報
+    dl.detail-grid
+      dt 説明
+      dd= @situation.description
+      dt 作成日
+      dd= @situation.created_at.strftime('%Y-%m-%d %H:%M')
 
-p
-  strong 作成日:
-  = @situation.created_at.strftime('%Y-%m-%d %H:%M')
+  .admin-header style="margin-top: 32px;"
+    div
+      h2.admin-title style="font-size: 22px;" 質問一覧
+    = link_to '新しい質問を追加', new_situation_question_path(@situation), class: 'btn-primary-custom'
 
-h2 質問一覧
-= link_to '新しい質問を追加', new_situation_question_path(@situation), class: 'btn btn-primary mb-2'
-
-table.table.table-striped
-  thead
-    tr
-      th 順序
-      th 質問内容
-      th タイプ
-      th 選択肢
-      th 操作
-  tbody
-    - @situation.questions.order(:order).each do |q|
-      tr
-        td= q.order
-        td= q.question_text
-        td= q.question_type
-        td= q.options
-        td
-          = link_to '編集', edit_situation_question_path(@situation, q), class: 'btn btn-sm btn-warning'
-          = link_to '削除', situation_question_path(@situation, q), method: :delete, data: { confirm: '削除しますか？' }, class: 'btn btn-sm btn-danger'
-
-= link_to '一覧に戻る', situations_path, class: 'btn btn-secondary mt-3'
+  .admin-card
+    table.admin-table
+      thead
+        tr
+          th 順序
+          th 質問内容
+          th タイプ
+          th 選択肢
+          th 操作
+      tbody
+        - @situation.questions.order(:order).each do |q|
+          tr
+            td= q.order
+            td= q.question_text
+            td= q.question_type
+            td= q.options
+            td
+              .admin-actions
+                = link_to '編集', edit_situation_question_path(@situation, q), class: 'btn-secondary-custom btn-sm'
+                = link_to '削除', situation_question_path(@situation, q), method: :delete, data: { confirm: '削除しますか？' }, class: 'btn-danger-custom btn-sm'

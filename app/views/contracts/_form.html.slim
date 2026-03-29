@@ -1,0 +1,47 @@
+= form_with model: @contract, local: true do |f|
+  - if @contract.errors.any?
+    .admin-card style="border-left: 4px solid #dc3545;"
+      ul style="margin:0; padding-left:20px; color:#721c24;"
+        - @contract.errors.full_messages.each do |msg|
+          li= msg
+
+  .admin-card
+    .form-group-custom
+      = f.label :company, '会社名'
+      span.hint style="color:#dc3545; margin-left:4px;" 必須
+      = f.text_field :company, placeholder: '株式会社〇〇〇〇', required: true
+
+    .form-group-custom
+      = f.label :name, '担当者名'
+      span.hint style="color:#dc3545; margin-left:4px;" 必須
+      = f.text_field :name, placeholder: '山田太郎', required: true
+
+    .form-group-custom
+      = f.label :tel, '電話番号'
+      span.hint style="color:#dc3545; margin-left:4px;" 必須
+      = f.telephone_field :tel, placeholder: '050-1234-5678', required: true
+
+    .form-group-custom
+      = f.label :email, 'メールアドレス'
+      span.hint style="color:#dc3545; margin-left:4px;" 必須
+      = f.email_field :email, placeholder: 'test@example.com', required: true
+
+    .form-group-custom
+      = f.label :address, '住所'
+      span.hint style="color:#dc3545; margin-left:4px;" 必須
+      = f.text_field :address, placeholder: '東京都東京市東京町1-1-1東京ビル111', required: true
+
+    .form-group-custom
+      = f.label :url, 'URL'
+      = f.url_field :url, placeholder: 'https://example.com/'
+
+    .form-group-custom
+      = f.label :period, '導入時期'
+      = f.text_field :period, placeholder: '例: 2026年4月〜'
+
+    .form-group-custom
+      = f.label :message, '備考・要望'
+      = f.text_area :message, rows: 4, placeholder: 'お問い合わせ内容をご入力ください'
+
+    .form-group-custom
+      = f.submit '送信する', class: 'btn-primary-custom'

@@ -215,9 +215,11 @@ if (typeof gsap !== "undefined") {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  if (typeof Swiper === 'undefined') return;
+
   console.log('Initializing Swiper sliders...');
-  
-  const caseStudiesSwiper = new Swiper('.case-studies-swiper', {
+
+  var caseStudiesSwiper = new Swiper('.case-studies-swiper', {
     slidesPerView: 1,
     spaceBetween: 20,
     loop: true,
@@ -237,8 +239,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
-  
-  const pricingSwiper = new Swiper('.pricing-swiper', {
+
+  var pricingSwiper = new Swiper('.pricing-swiper', {
     slidesPerView: 1,
     spaceBetween: 20,
     loop: true,
@@ -258,12 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
-  
+
   console.log('Swiper sliders initialized successfully!');
 });
 
 document.addEventListener('DOMContentLoaded', () => {
   const section = document.querySelector('.japan-notyo-section');
+  if (!section) return;
 
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -319,40 +322,59 @@ document.addEventListener('DOMContentLoaded', function() {
   
 });
 
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes jap-notto-float {
-    0%, 100% {
-      transform: translate(-50%, -50%) translateY(0px);
-    }
-    50% {
-      transform: translate(-50%, -50%) translateY(-10px);
-    }
-  }
-`;
-document.head.appendChild(style);
+(function() {
+  if (document.getElementById('jap-notto-float-style')) return;
+  var floatStyle = document.createElement('style');
+  floatStyle.id = 'jap-notto-float-style';
+  floatStyle.textContent = '@keyframes jap-notto-float { 0%, 100% { transform: translate(-50%, -50%) translateY(0px); } 50% { transform: translate(-50%, -50%) translateY(-10px); } }';
+  document.head.appendChild(floatStyle);
+})();
 
 
 
 
-const mountDataTargetNav = () => {
-  document.body.addEventListener('click', (e) => {
-    const a = e.target.closest('a[data-target]');
+(function() {
+  if (window._dataTargetNavMounted) return;
+  window._dataTargetNavMounted = true;
+
+  document.body.addEventListener('click', function(e) {
+    var a = e.target.closest('a[data-target]');
     if (!a) return;
 
     e.preventDefault();
-    const id = a.getAttribute('data-target');
-    const target = document.getElementById(id);
+    var id = a.getAttribute('data-target');
+    var target = document.getElementById(id);
     if (!target) return;
 
-    const headerH = document.querySelector('.site-header')?.offsetHeight || 0;
-    const top = target.getBoundingClientRect().top + window.scrollY - headerH - 10;
+    var header = document.querySelector('.site-header');
+    var headerH = header ? header.offsetHeight : 0;
+    var top = target.getBoundingClientRect().top + window.scrollY - headerH - 10;
 
     window.scrollTo({ top: Math.max(0, Math.round(top)), behavior: 'smooth' });
 
-    // 擬似スクロールイベントでfadeIn系の再判定を促す
-    setTimeout(() => window.dispatchEvent(new Event('scroll')), 60);
+    setTimeout(function() { window.dispatchEvent(new Event('scroll')); }, 60);
   });
-};
+})();
 
-document.addEventListener('turbolinks:load', mountDataTargetNav);
+// ログインドロップダウン
+document.addEventListener('turbolinks:load', function() {
+  var toggleBtn = document.querySelector('[data-toggle-login]');
+  if (!toggleBtn) return;
+
+  var menu = toggleBtn.parentElement.querySelector('.dropdown-menu-login');
+  if (!menu) return;
+
+  toggleBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+  });
+
+  document.addEventListener('click', function() {
+    menu.style.display = 'none';
+  });
+
+  menu.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+});

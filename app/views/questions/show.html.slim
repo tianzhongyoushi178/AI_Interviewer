@@ -1,21 +1,19 @@
-/ app/views/questions/show.html.slim
-h1 質問詳細
+.admin-container
+  .admin-header
+    div
+      h1.admin-title 質問詳細
+      p.admin-subtitle 質問の内容を確認できます
+    .admin-actions
+      = link_to '編集', edit_situation_question_path(@situation, @question), class: 'btn-secondary-custom'
+      = link_to '一覧に戻る', situation_questions_path(@situation), class: 'btn-secondary-custom'
 
-p
-  strong 順序:
-  = @question.order
-
-p
-  strong 質問内容:
-  = @question.question_text
-
-p
-  strong タイプ:
-  = @question.question_type
-
-p
-  strong 選択肢:
-  = @question.options
-
-= link_to '編集', edit_situation_question_path(@situation, @question), class: 'btn btn-warning'
-= link_to '一覧に戻る', situation_questions_path(@situation), class: 'btn btn-secondary'
+  .admin-card
+    dl.detail-grid
+      dt 順序
+      dd= @question.order
+      dt 質問内容
+      dd= @question.question_text
+      dt タイプ
+      dd= @question.question_type
+      dt 選択肢
+      dd= @question.options

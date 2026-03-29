@@ -1,22 +1,25 @@
-.section-knowhow
-  .container
-    h1.section-title ドラフト・未完了記事一覧
+.admin-container
+  h1.admin-title ドラフト・未完了記事一覧
+  p.admin-subtitle 未承認・未生成の記事を管理できます
 
-    - if @columns.empty?
-      p 対象の記事はありません
-    - else
-      = form_with(url: bulk_update_drafts_columns_path, method: :post, local: true) do |form|
-        .d-flex.justify-content-start.mb-3 
-          = form.button "選択をChat GPTに依頼", name: "action_type", value: "approve_bulk", class: "btn btn-dark me-2", data: { confirm: "選択された記事を承認して本文生成を開始しますか？" }
-          = form.button "選択を削除", name: "action_type", value: "delete_bulk", class: "btn btn-danger", data: { confirm: "選択された記事を一括削除しますか？" }
+  - if @columns.empty?
+    .admin-card
+      .empty-state
+        p 対象の記事はありません
+  - else
+    = form_with(url: bulk_update_drafts_columns_path, method: :post, local: true) do |form|
+      .admin-actions style="margin-bottom: 20px;"
+        = form.button "選択をChat GPTに依頼", name: "action_type", value: "approve_bulk", class: "btn-primary-custom", data: { confirm: "選択された記事を承認して本文生成を開始しますか？" }
+        = form.button "選択を削除", name: "action_type", value: "delete_bulk", class: "btn-danger-custom", data: { confirm: "選択された記事を一括削除しますか？" }
 
-        table.table
+      .admin-card
+        table.admin-table
           thead
             tr
-              th.text-center
+              th style="text-align:center; width:50px;"
                 = check_box_tag "select_all", "1", false, class: "form-check-input", onclick: "toggleAll(this)"
-              th id
-              th parent
+              th ID
+              th 親ID
               th タイトル
               th ジャンル
               th 状態
@@ -25,29 +28,28 @@
           tbody
             - @columns.each do |column|
               tr
-                td.text-center
+                td style="text-align:center;"
                   = check_box_tag "column_ids[]", column.id, false, class: "form-check-input column-checkbox"
-                td = column.id
-                td = column.parent_id
-                td = column.title
-                td = column.genre
+                td= column.id
+                td= column.parent_id
+                td= column.title
+                td= column.genre
                 td
                   - if column.status == "draft"
-                    span.badge.bg-secondary 未承認
+                    span.status-badge.status-badge--progress 未承認
                   - elsif column.body.blank?
-                    span.badge.bg-danger 本文なし(要再生成)
+                    span.status-badge.status-badge--fail 本文なし(要再生成)
                   - else
-                    span.badge.bg-info 生成中/その他
-                td = column.updated_at.in_time_zone.strftime("%Y/%m/%d")
-                td 
-                  .d-flex.gap-1
-                    / 本文がない場合は「再生成」として機能するように
-                    = link_to "ChatGPT", approve_column_path(column), method: :patch, class: "btn btn-dark btn-sm"
-                    = link_to 'Edit', edit_column_path(column), class: 'btn btn-success', data: { turbo: false }                
-                    = link_to "Delete", column_path(column), method: :delete, data: { confirm: "削除しますか？" }, class: "btn btn-danger btn-sm"
+                    span.status-badge style="background:#e3f2fd; color:#1565c0;" 生成中/その他
+                td= column.updated_at.in_time_zone.strftime("%Y/%m/%d")
+                td
+                  .admin-actions
+                    = link_to "ChatGPT", approve_column_path(column), method: :patch, class: "btn-primary-custom btn-sm"
+                    = link_to '編集', edit_column_path(column), class: 'btn-secondary-custom btn-sm', data: { turbo: false }
+                    = link_to "削除", column_path(column), method: :delete, data: { confirm: "削除しますか？" }, class: "btn-danger-custom btn-sm"
 
-    javascript:
-      function toggleAll(source) {
-        const checkboxes = document.querySelectorAll('.column-checkbox');
-        checkboxes.forEach(cb => cb.checked = source.checked);
-      }
+  javascript:
+    function toggleAll(source) {
+      const checkboxes = document.querySelectorAll('.column-checkbox');
+      checkboxes.forEach(cb => cb.checked = source.checked);
+    }

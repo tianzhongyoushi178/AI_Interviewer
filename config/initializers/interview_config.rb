@@ -7,7 +7,7 @@ cfg = Rails.application.config.interview
 
 # === LLM 設定 ===
 cfg.llm_model          = ENV.fetch('LLM_MODEL', 'openai')             # openai / claude
-cfg.openai_model       = ENV.fetch('OPENAI_MODEL', 'gpt-4')           # OpenAI モデル名
+cfg.openai_model       = ENV.fetch('OPENAI_MODEL', 'gpt-4o')          # OpenAI モデル名（gpt-4oはresponse_format: json_object対応）
 cfg.claude_model       = ENV.fetch('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
 cfg.llm_temperature    = ENV.fetch('LLM_TEMPERATURE', '0.2').to_f
 cfg.llm_max_tokens     = ENV.fetch('LLM_MAX_TOKENS', '600').to_i

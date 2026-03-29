@@ -80,17 +80,19 @@ class Interview < ApplicationRecord
     true
   end
 
-  # 面接を再開
+  # 面接を再開（同時リクエスト対策として悲観ロック使用）
   def resume!
-    raise "Interview cannot be resumed" unless resumable?
+    with_lock do
+      raise "Interview cannot be resumed" unless resumable?
 
-    update!(
-      status: :in_progress,
-      resumed_at: Time.current,
-      last_activity_at: Time.current,
-      resume_count: resume_count + 1,
-      ended_at: nil
-    )
+      update!(
+        status: :in_progress,
+        resumed_at: Time.current,
+        last_activity_at: Time.current,
+        resume_count: resume_count + 1,
+        ended_at: nil
+      )
+    end
   end
 
   def rejected?

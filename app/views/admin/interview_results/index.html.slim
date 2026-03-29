@@ -1,23 +1,37 @@
-h1 Interview Results (Admin)
+.admin-container
+  h1.admin-title 面接結果一覧
+  p.admin-subtitle 全応募者の面接結果を管理できます（管理者）
 
-.table-wrapper
-  table
-    thead
-      tr
-        th ID
-        th Applicant
-        th Situation
-        th Status
-        th Average Score
-        th Created
-        th
-    tbody
-      - @results.each do |result|
-        tr
-          td= result.id
-          td= result.interview.user&.email
-          td= result.interview.situation&.title
-          td= result.final_status
-          td= result.average_score
-          td= l(result.created_at, format: :short)
-          td= link_to 'View', admin_interview_result_path(result)
+  .admin-card
+    - if @results.empty?
+      .empty-state
+        p まだ面接結果がありません
+    - else
+      table.admin-table
+        thead
+          tr
+            th ID
+            th 応募者
+            th 面接フォーム
+            th ステータス
+            th 平均スコア
+            th 作成日
+            th 操作
+        tbody
+          - @results.each do |result|
+            tr
+              td= result.id
+              td= result.interview.user&.email
+              td= result.interview.situation&.title
+              td
+                - case result.final_status
+                - when "passed"
+                  span.status-badge.status-badge--pass 合格
+                - when "failed"
+                  span.status-badge.status-badge--fail 不合格
+                - else
+                  span.status-badge.status-badge--progress= result.final_status
+              td= result.average_score
+              td= l(result.created_at, format: :short)
+              td
+                = link_to '詳細', admin_interview_result_path(result), class: 'btn-primary-custom btn-sm'

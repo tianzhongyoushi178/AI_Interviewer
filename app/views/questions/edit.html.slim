@@ -1,4 +1,5 @@
-/ app/views/questions/edit.html.slim
-h1 質問を編集
-= render 'form'
-= link_to '戻る', situation_questions_path(@situation), class: 'btn btn-secondary mt-2'
+.admin-container
+  h1.admin-title 質問を編集
+  p.admin-subtitle 質問の内容を編集できます
+  = render 'form'
+  = link_to '戻る', situation_questions_path(@situation), class: 'btn-secondary-custom mt-2'

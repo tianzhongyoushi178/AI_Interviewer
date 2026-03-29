@@ -1,0 +1,29 @@
+.admin-container
+  .admin-header
+    div
+      h1.admin-title お問い合わせ詳細
+      p.admin-subtitle= "ID: #{@contract.id}"
+    .admin-actions
+      = link_to '編集', edit_contract_path(@contract), class: 'btn-secondary-custom'
+      = link_to '一覧に戻る', contracts_path, class: 'btn-secondary-custom'
+
+  .admin-card
+    dl.detail-grid
+      dt 会社名
+      dd= @contract.company
+      dt 担当者名
+      dd= @contract.name
+      dt 電話番号
+      dd= @contract.tel
+      dt メールアドレス
+      dd= @contract.email
+      dt 住所
+      dd= @contract.address
+      dt URL
+      dd= @contract.url
+      dt 導入時期
+      dd= @contract.period
+      dt 備考・要望
+      dd= @contract.message
+      dt 作成日
+      dd= @contract.created_at.strftime('%Y-%m-%d %H:%M')

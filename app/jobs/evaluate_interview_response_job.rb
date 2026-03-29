@@ -6,8 +6,12 @@ class EvaluateInterviewResponseJob < ApplicationJob
 
   def perform(interview_response_id)
     response = InterviewResponse.find(interview_response_id)
+
+    # べき等性チェック: 既に評価済みの場合はスキップ
+    return if response.completed?
+
     language = response.interview.situation.language || 'en'
-    
+
     evaluator = InterviewEngine::ResponseEvaluator.new(response, language: language)
     evaluator.evaluate
   end

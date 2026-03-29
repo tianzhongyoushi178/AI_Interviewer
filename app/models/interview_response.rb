@@ -13,7 +13,8 @@ class InterviewResponse < ApplicationRecord
   }
 
   validates :interview_id, :question_id, presence: true
-  validates :audio_transcript, presence: true, if: :persisted?
+  validates :audio_transcript, presence: true
+  validate :question_belongs_to_interview_situation
 
   # Store evaluation results
   store :evaluation_data, accessors: [
@@ -38,7 +39,7 @@ class InterviewResponse < ApplicationRecord
   }
 
   def evaluated?
-    evaluation_status == 'completed'
+    completed?
   end
 
   def passed_evaluation?
@@ -47,5 +48,15 @@ class InterviewResponse < ApplicationRecord
 
   def score
     evaluation_data&.dig('final_score')&.to_f
+  end
+
+  private
+
+  def question_belongs_to_interview_situation
+    return if interview.nil? || question.nil?
+
+    unless question.situation_id == interview.situation_id
+      errors.add(:question, "はこの面接のシチュエーションに属していません")
+    end
   end
 end

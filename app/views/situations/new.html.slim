@@ -1,4 +1,5 @@
-/ app/views/situations/new.html.slim
-h1 新しい面接フォームを作成
-= render 'form'
-= link_to '一覧に戻る', situations_path, class: 'btn btn-secondary mt-2'
+.admin-container
+  h1.admin-title 新しい面接フォームを作成
+  p.admin-subtitle 面接フォームの基本情報を入力してください
+  = render 'form'
+  = link_to '一覧に戻る', situations_path, class: 'btn-secondary-custom mt-2'

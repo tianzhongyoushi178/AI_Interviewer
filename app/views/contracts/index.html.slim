@@ -1,0 +1,35 @@
+.admin-container
+  h1.admin-title お問い合わせ一覧
+  p.admin-subtitle 受信したお問い合わせを管理できます
+
+  .admin-card
+    - if @contracts.empty?
+      .empty-state
+        p まだお問い合わせがありません
+    - else
+      table.admin-table
+        thead
+          tr
+            th ID
+            th 会社名
+            th 担当者名
+            th メールアドレス
+            th 電話番号
+            th 作成日
+            th 操作
+        tbody
+          - @contracts.each do |contract|
+            tr
+              td= contract.id
+              td= contract.company
+              td= contract.name
+              td= contract.email
+              td= contract.tel
+              td= contract.created_at.strftime('%Y-%m-%d')
+              td
+                .admin-actions
+                  = link_to '詳細', contract_path(contract), class: 'btn-primary-custom btn-sm'
+                  = link_to '編集', edit_contract_path(contract), class: 'btn-secondary-custom btn-sm'
+                  = link_to '削除', contract_path(contract), method: :delete, data: { confirm: '本当に削除しますか？' }, class: 'btn-danger-custom btn-sm'
+
+  = paginate @contracts

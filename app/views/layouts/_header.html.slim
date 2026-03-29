@@ -3,17 +3,33 @@
         .d-flex.align-items-center.logo-section
           = image_tag "logo2.png", class: "nav-logo me-2", alt: "Logo"
           span.nav-subtext
-            | 
+            |
+          - if ENV['AI_INTERVIEW_TEST_MODE'] == 'true'
+            span style="margin-left:10px; background:#e74c3c; color:#fff; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:4px; letter-spacing:0.5px;" TEST MODE
         nav.nav-menu.d-none.d-lg-flex
           ul.d-flex.list-unstyled.mb-0
             li
-                = link_to "トップページ", "/" , class: "nav-link-custom"   
-            li
-              a.nav-link-custom href="javascript:void(0)" data-target="service" サービス
-            li
-              a.nav-link-custom href="javascript:void(0)" data-target="business" 事業内容
-            li
-              a.nav-link-custom href="javascript:void(0)" data-target="case" 導入事例
+                = link_to "トップページ", "/" , class: "nav-link-custom"
+            - if client_signed_in?
+              li
+                = link_to "面接フォーム管理", situations_path, class: "nav-link-custom"
+              li
+                = link_to "面接結果", client_interview_results_path, class: "nav-link-custom"
+            - elsif admin_signed_in?
+              li
+                = link_to "面接結果", admin_interview_results_path, class: "nav-link-custom"
+              li
+                = link_to "コラム管理", columns_path, class: "nav-link-custom"
+            - elsif user_signed_in?
+              li
+                = link_to "AI面接", interview_path, class: "nav-link-custom"
+            - else
+              li
+                a.nav-link-custom href="javascript:void(0)" data-target="service" サービス
+              li
+                a.nav-link-custom href="javascript:void(0)" data-target="business" 事業内容
+              li
+                a.nav-link-custom href="javascript:void(0)" data-target="case" 導入事例
         nav.mobile-nav.d-lg-none
           #mobile-nav-toggle.mobile-nav-toggle
             span.hamburger-line
@@ -26,25 +42,66 @@
                 span.close-line
             ul.mobile-nav-list
               li
-                = link_to "トップページ", "/" , class: "nav-link-custom"        
-              li
-                a.nav-link-custom href="javascript:void(0)" data-target="service" サービス
-              li
-                a.nav-link-custom href="javascript:void(0)" data-target="business" 事業内容
-              li
-                a.nav-link-custom href="javascript:void(0)" data-target="case" 導入事例
+                = link_to "トップページ", "/" , class: "nav-link-custom"
+              - if client_signed_in?
+                li
+                  = link_to "面接フォーム管理", situations_path, class: "nav-link-custom"
+                li
+                  = link_to "面接結果", client_interview_results_path, class: "nav-link-custom"
+              - elsif admin_signed_in?
+                li
+                  = link_to "面接結果", admin_interview_results_path, class: "nav-link-custom"
+                li
+                  = link_to "コラム管理", columns_path, class: "nav-link-custom"
+              - elsif user_signed_in?
+                li
+                  = link_to "AI面接", interview_path, class: "nav-link-custom"
+              - else
+                li
+                  a.nav-link-custom href="javascript:void(0)" data-target="service" サービス
+                li
+                  a.nav-link-custom href="javascript:void(0)" data-target="business" 事業内容
+                li
+                  a.nav-link-custom href="javascript:void(0)" data-target="case" 導入事例
             .mobile-nav-actions
               = image_tag "search.png", class: "search-icon", alt: "Search"
-              button.btn.login-btn
-                | ログイン
+              - if client_signed_in? || admin_signed_in? || user_signed_in?
+                - if client_signed_in?
+                  = link_to "ログアウト", destroy_client_session_path, method: :delete, class: "btn login-btn"
+                - elsif admin_signed_in?
+                  = link_to "ログアウト", destroy_admin_session_path, method: :delete, class: "btn login-btn"
+                - elsif user_signed_in?
+                  = link_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn login-btn"
+              - else
+                = link_to "ログイン（企業）", new_client_session_path, class: "btn login-btn"
+                = link_to "ログイン（応募者）", new_user_session_path, class: "btn login-btn"
               button.btn.contact-btn.d-flex.align-items-center.gap-2
-                a.nav-link-custom href="javascript:void(0)" data-target="inquiry" お問い合わせ
+                = link_to "お問い合わせ", new_contract_path, class: "nav-link-custom"
                 = image_tag "arrow-down.png", class: "arrow-icon", alt: "Arrow"
         .d-flex.align-items-center.gap-3.d-none.d-lg-flex
           = image_tag "search.png", class: "search-icon", alt: "Search"
-          button.btn.login-btn
-            | ログイン
+          - if client_signed_in?
+            span.nav-link-custom style="color: #333; font-size: 14px;"
+              = current_client.email
+            = link_to "ログアウト", destroy_client_session_path, method: :delete, class: "btn login-btn"
+          - elsif admin_signed_in?
+            span.nav-link-custom style="color: #333; font-size: 14px;"
+              | 管理者:
+              = current_admin.email
+            = link_to "ログアウト", destroy_admin_session_path, method: :delete, class: "btn login-btn"
+          - elsif user_signed_in?
+            span.nav-link-custom style="color: #333; font-size: 14px;"
+              = current_user.name || current_user.email
+            = link_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn login-btn"
+          - else
+            .dropdown.position-relative
+              button.btn.login-btn.dropdown-toggle-login data-toggle-login="true"
+                | ログイン
+              .dropdown-menu-login style="display:none; position:absolute; top:100%; right:0; background:#fff; border:1px solid #ddd; border-radius:8px; padding:8px 0; min-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:1000;"
+                = link_to "企業（クライアント）", new_client_session_path, style: "display:block; padding:10px 20px; color:#333; text-decoration:none; font-size:14px;"
+                = link_to "応募者（ユーザー）", new_user_session_path, style: "display:block; padding:10px 20px; color:#333; text-decoration:none; font-size:14px;"
+                = link_to "管理者", new_admin_session_path, style: "display:block; padding:10px 20px; color:#333; text-decoration:none; font-size:14px;"
           button.btn.contact-btn.d-flex.align-items-center.gap-2
-            a.nav-link-custom href="javascript:void(0)" data-target="inquiry" お問い合わせ
+            = link_to "お問い合わせ", new_contract_path, class: "nav-link-custom"
             = image_tag "arrow-down.png", class: "arrow-icon", alt: "Arrow"
 

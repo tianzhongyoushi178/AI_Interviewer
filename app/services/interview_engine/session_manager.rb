@@ -219,7 +219,7 @@ module InterviewEngine
         {
           question: r.question.question_text,
           answer: r.audio_transcript,
-          score: r.score
+          score: r.score || 0
         }
       end
 
@@ -267,7 +267,7 @@ module InterviewEngine
 
       case method
       when 'email'
-        # Day 15以降でActionMailer統合予定
+        InterviewMailer.rejection_notification(interview, reason).deliver_later
         Rails.logger.info("Rejection notification (email): Interview ##{interview.id} - #{reason}")
       when 'in_app'
         Rails.logger.info("Rejection notification (in_app): Interview ##{interview.id} - #{reason}")

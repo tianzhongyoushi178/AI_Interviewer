@@ -6,9 +6,9 @@
 class Rack::Attack
   # キャッシュストア設定
   if Rails.env.production?
-    Rack::Attack.cache.store = ActiveSupport::Cache::RedisCacheStore.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/1'))
+    Rack::Attack.cache_store = ActiveSupport::Cache::RedisCacheStore.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/1'))
   else
-    Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+    Rack::Attack.cache_store = ActiveSupport::Cache::MemoryStore.new
   end
 
   ### ホワイトリスト ###

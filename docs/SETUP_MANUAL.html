@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI Interview System セットアップマニュアル</title>
+<style>
+  @page { margin: 20mm; size: A4; }
+  body {
+    font-family: "Meiryo", "Hiragino Kaku Gothic Pro", "Yu Gothic", sans-serif;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #1a1a1a;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  h1 {
+    font-size: 22pt;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 10px;
+    margin-top: 0;
+    color: #1e3a5f;
+  }
+  h2 {
+    font-size: 16pt;
+    color: #2563eb;
+    border-left: 4px solid #2563eb;
+    padding-left: 12px;
+    margin-top: 36px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 13pt;
+    color: #1e3a5f;
+    margin-top: 24px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11pt;
+    color: #374151;
+    margin-top: 18px;
+    page-break-after: avoid;
+  }
+  p { margin: 8px 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background: #eff6ff;
+    color: #1e3a5f;
+    font-weight: bold;
+  }
+  tr:nth-child(even) { background: #f9fafb; }
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: "Consolas", "Source Code Pro", monospace;
+    font-size: 9.5pt;
+    color: #c7254e;
+  }
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: "Consolas", "Source Code Pro", monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    page-break-inside: avoid;
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+  .info-box {
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  .warn-box {
+    background: #fefce8;
+    border: 1px solid #fde047;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  .header-meta {
+    color: #6b7280;
+    font-size: 10pt;
+    margin-bottom: 24px;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 28px 0;
+  }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>AI Interview System<br>セットアップマニュアル</h1>
+<div class="header-meta">
+  バージョン: 1.0 ｜ 最終更新: 2026年4月10日
+</div>
+
+<h2>1. 概要</h2>
+<p>
+  AI面接システムのローカル開発環境構築手順です。<br>
+  Ruby on Rails 6.1 ベースのWebアプリケーションで、OpenAI APIを利用したAI面接を実施できます。
+</p>
+
+<div class="info-box">
+  <strong>主な機能:</strong> 構造化面接の質問配信 / 音声認識（Whisper） / AI自動採点（GPT-4） / テキスト読み上げ（TTS） / 面接結果レポート
+</div>
+
+<h2>2. 動作環境</h2>
+<table>
+  <tr><th>項目</th><th>要件</th></tr>
+  <tr><td>Ruby</td><td>3.1.x</td></tr>
+  <tr><td>Rails</td><td>6.1.7</td></tr>
+  <tr><td>DB（開発）</td><td>SQLite3（設定不要）</td></tr>
+  <tr><td>DB（本番）</td><td>PostgreSQL</td></tr>
+  <tr><td>Node.js</td><td>14以上（アセットパイプライン用）</td></tr>
+  <tr><td>OS</td><td>Windows / macOS / Linux</td></tr>
+</table>
+
+<h2>3. セットアップ手順</h2>
+
+<h3>方法A: ローカルインストール（推奨）</h3>
+
+<h4>3-1. リポジトリのクローン</h4>
+<pre><code>git clone https://github.com/tianzhongyoushi178/AI_Interviewer.git
+cd AI_Interviewer</code></pre>
+
+<h4>3-2. Rubyのインストール</h4>
+
+<p><strong>Windows（winget）:</strong></p>
+<pre><code>winget install RubyInstallerTeam.RubyWithDevKit.3.1</code></pre>
+<p>インストール後、新しいターミナルを開いてパスを反映させてください。</p>
+
+<p><strong>macOS（Homebrew）:</strong></p>
+<pre><code>brew install ruby@3.1</code></pre>
+
+<p><strong>Linux（rbenv）:</strong></p>
+<pre><code>rbenv install 3.1.6
+rbenv local 3.1.6</code></pre>
+
+<p>インストール確認:</p>
+<pre><code>ruby --version
+# ruby 3.1.x が表示されればOK</code></pre>
+
+<h4>3-3. Gemのインストール</h4>
+<pre><code>bundle install</code></pre>
+
+<h4>3-4. データベースのセットアップ</h4>
+<pre><code>bundle exec rails db:setup</code></pre>
+
+<div class="info-box">
+  このコマンドで以下が一括実行されます:<br>
+  ・データベース作成（SQLite）<br>
+  ・マイグレーション実行<br>
+  ・Seedデータ投入（テスト用アカウント・面接データ）
+</div>
+
+<h4>3-5. 環境変数の設定</h4>
+<pre><code>cp .env.example .env</code></pre>
+<p><code>.env</code> を編集し、必要に応じてAPIキーを設定:</p>
+<pre><code># 必須（AI機能を使う場合）
+OPENAI_API_KEY=sk-your-openai-api-key
+
+# テストモード（APIキーなしで動作確認したい場合）
+AI_INTERVIEW_TEST_MODE=true</code></pre>
+
+<h4>3-6. サーバー起動</h4>
+<pre><code>bundle exec rails server</code></pre>
+<p><code>http://localhost:3000</code> にアクセスして動作確認。</p>
+
+<hr>
+
+<h3>方法B: Docker（Ruby不要）</h3>
+
+<h4>3-1. リポジトリのクローン</h4>
+<pre><code>git clone https://github.com/tianzhongyoushi178/AI_Interviewer.git
+cd AI_Interviewer</code></pre>
+
+<h4>3-2. 環境変数の設定</h4>
+<pre><code>cp .env.example .env</code></pre>
+<p><code>.env</code> に <code>AI_INTERVIEW_TEST_MODE=true</code> を追記。</p>
+
+<h4>3-3. ビルド＆起動</h4>
+<pre><code>docker compose up --build</code></pre>
+<p>初回はイメージのビルドに数分かかります。<br>
+<code>http://localhost:3000</code> にアクセスして動作確認。</p>
+<p>停止: <code>Ctrl+C</code> または <code>docker compose down</code></p>
+
+<div class="page-break"></div>
+
+<h2>4. テスト用アカウント</h2>
+<p><code>rails db:setup</code> 実行後、以下のアカウントが自動作成されます（Seedデータ）:</p>
+<table>
+  <tr><th>ロール</th><th>メールアドレス</th><th>パスワード</th><th>ログインURL</th></tr>
+  <tr><td>クライアント（企業）</td><td>client@interview.com</td><td>password123</td><td>/clients/sign_in</td></tr>
+  <tr><td>受験者</td><td>test@interview.com</td><td>password123</td><td>/users/sign_in</td></tr>
+</table>
+
+<p>管理者アカウントは手動で作成:</p>
+<pre><code>bundle exec rails runner "Admin.create!(email: 'admin@example.com', password: 'password123')"</code></pre>
+<p>管理者ログイン: <code>/admins/sign_in</code></p>
+
+<h2>5. 画面構成</h2>
+<table>
+  <tr><th>URL</th><th>内容</th><th>ログインロール</th></tr>
+  <tr><td>/</td><td>トップページ</td><td>不要</td></tr>
+  <tr><td>/clients/sign_in</td><td>クライアント（企業）ログイン</td><td>-</td></tr>
+  <tr><td>/users/sign_in</td><td>受験者ログイン</td><td>-</td></tr>
+  <tr><td>/admins/sign_in</td><td>管理者ログイン</td><td>-</td></tr>
+  <tr><td>/situations</td><td>面接シナリオ管理</td><td>クライアント</td></tr>
+  <tr><td>/situations/:id/questions</td><td>質問管理</td><td>クライアント</td></tr>
+  <tr><td>/client/interview_results</td><td>面接結果一覧（企業側）</td><td>クライアント</td></tr>
+  <tr><td>/admin/interview_results</td><td>面接結果一覧（管理者）</td><td>管理者</td></tr>
+</table>
+
+<h2>6. APIエンドポイント</h2>
+<p>面接の実行はAPIで行います:</p>
+<table>
+  <tr><th>メソッド</th><th>エンドポイント</th><th>機能</th></tr>
+  <tr><td>POST</td><td>/api/interviews/start</td><td>面接開始</td></tr>
+  <tr><td>POST</td><td>/api/interviews/start_by_token</td><td>トークンで面接開始</td></tr>
+  <tr><td>GET</td><td>/api/interviews/:id/next_question</td><td>次の質問を取得</td></tr>
+  <tr><td>POST</td><td>/api/interviews/:id/submit_answer</td><td>回答を送信</td></tr>
+  <tr><td>GET</td><td>/api/interviews/:id/status</td><td>進捗確認</td></tr>
+  <tr><td>POST</td><td>/api/interviews/:id/complete</td><td>面接完了</td></tr>
+  <tr><td>POST</td><td>/api/interviews/:id/resume</td><td>面接再開</td></tr>
+</table>
+
+<h3>APIテスト例</h3>
+<pre><code># 面接開始
+curl -X POST http://localhost:3000/api/interviews/start \
+  -H "Content-Type: application/json" \
+  -d '{"situation_id": 1, "language": "ja"}'
+
+# 次の質問を取得（interview_idを置き換え）
+curl http://localhost:3000/api/interviews/1/next_question?language=ja
+
+# 回答送信
+curl -X POST http://localhost:3000/api/interviews/1/submit_answer \
+  -H "Content-Type: application/json" \
+  -d '{"question_id": 1, "text_answer": "Railsの経験は5年あります。"}'
+
+# 面接完了
+curl -X POST http://localhost:3000/api/interviews/1/complete</code></pre>
+
+<div class="page-break"></div>
+
+<h2>7. 主要な環境変数</h2>
+<table>
+  <tr><th>変数</th><th>説明</th><th>デフォルト</th></tr>
+  <tr><td>OPENAI_API_KEY</td><td>OpenAI APIキー（AI機能に必須）</td><td>-</td></tr>
+  <tr><td>AI_INTERVIEW_TEST_MODE</td><td>テストモード（APIキーなしで動作）</td><td>false</td></tr>
+  <tr><td>CLAUDE_API_KEY</td><td>Claude APIキー（代替LLM）</td><td>-</td></tr>
+  <tr><td>REDIS_URL</td><td>Redis URL（Sidekiq/本番用）</td><td>redis://localhost:6379/0</td></tr>
+  <tr><td>RAILS_ENV</td><td>実行環境</td><td>development</td></tr>
+  <tr><td>PORT</td><td>サーバーポート</td><td>3000</td></tr>
+</table>
+<p>全変数の一覧は <code>.env.example</code> を参照してください。</p>
+
+<h2>8. トラブルシューティング</h2>
+
+<h3>ポート3000が使用中</h3>
+<pre><code># Windows
+netstat -ano | findstr :3000
+taskkill /PID &lt;PID&gt; /F
+
+# macOS/Linux
+lsof -i :3000
+kill -9 &lt;PID&gt;
+
+# 別ポートで起動
+bundle exec rails server -p 3001</code></pre>
+
+<h3>bundle install でエラー</h3>
+<pre><code># Bundlerバージョンを合わせる
+gem install bundler -v 2.3.26
+bundle install</code></pre>
+
+<h3>rack-attack 起動エラー（NoMethodError: cache_store=）</h3>
+<p>rack-attack 6.8.0 以降ではAPIが変更されています。<br>
+<code>config/initializers/rack_attack.rb</code> の <code>cache_store=</code> を <code>cache.store=</code> に修正してください。（最新版では修正済み）</p>
+
+<h3>マイグレーションエラー</h3>
+<pre><code># データベースをリセットして再構築
+bundle exec rails db:reset</code></pre>
+
+<h3>Windows で wdm 警告が出る</h3>
+<div class="info-box">
+  以下の警告は動作に影響しません（無視可能）:<br>
+  <code>Please add the following to your Gemfile to avoid polling for changes: gem 'wdm', '>= 0.1.0' if Gem.win_platform?</code>
+</div>
+
+<h2>9. テストの実行</h2>
+<pre><code># RSpecテスト全体
+bundle exec rspec
+
+# 個別のテスト
+bundle exec rspec spec/models/interview_spec.rb
+bundle exec rspec spec/requests/api/interviews_spec.rb</code></pre>
+
+<h2>10. 本番デプロイ時の注意</h2>
+<table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>データベース</td><td>PostgreSQLを使用（<code>DATABASE_URL</code> を設定）</td></tr>
+  <tr><td>APIキー</td><td><code>OPENAI_API_KEY</code> を必ず設定</td></tr>
+  <tr><td>マスターキー</td><td><code>RAILS_MASTER_KEY</code> を設定</td></tr>
+  <tr><td>非同期処理</td><td>Redis + Sidekiq を起動（非同期評価処理用）</td></tr>
+  <tr><td>管理者登録</td><td><code>ALLOW_ADMIN_REGISTRATION=true</code> は初回のみ。管理者作成後は削除</td></tr>
+</table>
+<p>詳細は <code>PRODUCTION_IMPLEMENTATION_GUIDE.md</code> を参照してください。</p>
+
+</body>
+</html>

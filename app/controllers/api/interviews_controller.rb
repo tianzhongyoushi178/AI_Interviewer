@@ -238,7 +238,7 @@ module Api
       end
     end
 
-    # トークン or Devise認証の統合
+    # トークン or APIキー or Devise認証の統合
     def authenticate_by_token_or_user!
       # ヘッダーまたはパラメータからトークン取得
       token = request.headers['X-Interview-Token'] || params[:access_token]
@@ -251,6 +251,13 @@ module Api
         end
       end
 
+      # APIキー認証（Bearer token or X-API-Key ヘッダー）
+      # APIキーが提示された場合は成否に関わらずここで完結（Deviseに落ちない）
+      if extract_api_key.present?
+        authenticate_by_api_key!
+        return
+      end
+
       # テストモード
       if test_mode?
         @current_user = User.find_by(email: 'test@interview.com') || User.first
@@ -260,6 +267,39 @@ module Api
       # Devise認証にフォールバック
       authenticate_user!
       @current_user = current_user
+    end
+
+    # APIキーによる認証
+    def authenticate_by_api_key!
+      api_key = extract_api_key
+
+      configured_key = ENV['INTERVIEW_API_KEY']
+      if configured_key.blank?
+        render_api_error('API key authentication is not configured', status: :service_unavailable)
+        return
+      end
+
+      unless ActiveSupport::SecurityUtils.secure_compare(api_key, configured_key)
+        render_api_error('Invalid API key', status: :unauthorized)
+        return
+      end
+
+      # APIキー認証時はデフォルトAPIユーザーを使用
+      @current_user = User.find_by(email: 'api@interview.com') || User.first
+
+      unless @current_user
+        render_api_error('No user found. Create a user first.', status: :unprocessable_entity)
+      end
+    end
+
+    # Authorization: Bearer <key> または X-API-Key ヘッダーからAPIキーを抽出
+    def extract_api_key
+      auth_header = request.headers['Authorization']
+      if auth_header&.start_with?('Bearer ')
+        return auth_header.sub('Bearer ', '')
+      end
+
+      request.headers['X-API-Key']
     end
 
     def set_interview

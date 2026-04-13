@@ -6,7 +6,8 @@ module Api
     include FileUploadValidation
 
     before_action :verify_content_type!, only: [:start, :start_by_token, :submit_answer, :complete, :resume]
-    before_action :authenticate_by_token_or_user!, except: [:start_by_token]
+    before_action :authenticate_by_token_or_user!, except: [:start_by_token, :start]
+    before_action :authenticate_or_create_guest!, only: [:start]
     before_action :set_interview, only: [:next_question, :submit_answer, :complete, :status, :resume]
     before_action :check_session_timeout!, only: [:next_question, :submit_answer]
 
@@ -289,6 +290,41 @@ module Api
 
       unless @current_user
         render_api_error('No user found. Create a user first.', status: :unprocessable_entity)
+      end
+    end
+
+    # start用: 認証済みユーザーがいればそのまま、いなければゲストユーザーを作成
+    def authenticate_or_create_guest!
+      # 既存の認証手段を試行（トークン、APIキー、テストモード、Devise）
+      token = request.headers['X-Interview-Token'] || params[:access_token]
+      if token.present?
+        interview = Interview.by_token(token).first
+        if interview
+          @current_user = interview.user
+          return
+        end
+      end
+
+      if extract_api_key.present?
+        authenticate_by_api_key!
+        return
+      end
+
+      if test_mode?
+        @current_user = User.find_by(email: 'test@interview.com') || User.first
+        return
+      end
+
+      # Deviseセッションがあればそれを使用
+      if user_signed_in?
+        @current_user = current_user
+        return
+      end
+
+      # 認証手段がない場合はゲストユーザーを作成
+      @current_user = User.find_or_create_by(email: 'guest@interview.com') do |u|
+        u.name = 'Guest User'
+        u.password = SecureRandom.hex(16)
       end
     end
 

@@ -44,11 +44,19 @@ function initInterviewPortal() {
   const backToStartBtn = byId('back_to_start');
 
   let interviewId = null;
+  let accessToken = null;
   let currentQuestion = null;
   let mediaRecorder = null;
   let recordedChunks = [];
   let selectedOption = null;
   let isSubmitting = false;
+
+  // ===== API通信ヘルパー =====
+  function authHeaders(extra) {
+    var headers = extra || {};
+    if (accessToken) headers['X-Interview-Token'] = accessToken;
+    return headers;
+  }
 
   // ===== ステップ制御 =====
   function showStep(n) {
@@ -91,6 +99,8 @@ function initInterviewPortal() {
   function clearSavedInterview() {
     localStorage.removeItem('aiInterviewId');
     localStorage.removeItem('aiInterviewLanguage');
+    localStorage.removeItem('aiInterviewToken');
+    accessToken = null;
   }
 
   // ===== API calls =====
@@ -122,7 +132,9 @@ function initInterviewPortal() {
       }
 
       interviewId = data.interview_id;
+      accessToken = data.access_token;
       saveInterview(interviewId, data.language);
+      if (accessToken) localStorage.setItem('aiInterviewToken', accessToken);
       setStatus('\u9762\u63A5\u958B\u59CB');
       showStep(2);
       await loadNextQuestion();
@@ -140,6 +152,7 @@ function initInterviewPortal() {
       return;
     }
     interviewId = savedId;
+    accessToken = localStorage.getItem('aiInterviewToken');
     showStep(2);
     await refreshStatus();
     await loadNextQuestion();
@@ -147,7 +160,9 @@ function initInterviewPortal() {
 
   async function refreshStatus() {
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/status');
+      var res = await fetch('/api/interviews/' + interviewId + '/status', {
+        headers: authHeaders()
+      });
       var data = await res.json();
       if (!data.success) {
         setStatus(data.error || '\u30B9\u30C6\u30FC\u30BF\u30B9\u53D6\u5F97\u5931\u6557');
@@ -201,7 +216,9 @@ function initInterviewPortal() {
 
   async function loadNextQuestion() {
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/next_question');
+      var res = await fetch('/api/interviews/' + interviewId + '/next_question', {
+        headers: authHeaders()
+      });
       var data = await res.json();
 
       if (!data.success) {
@@ -297,6 +314,7 @@ function initInterviewPortal() {
     try {
       var res = await fetch('/api/interviews/' + interviewId + '/submit_answer', {
         method: 'POST',
+        headers: authHeaders(),
         body: form
       });
       var data = await res.json();
@@ -330,7 +348,10 @@ function initInterviewPortal() {
     completeBtn.textContent = '\u5B8C\u4E86\u51E6\u7406\u4E2D...';
 
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/complete', { method: 'POST' });
+      var res = await fetch('/api/interviews/' + interviewId + '/complete', {
+        method: 'POST',
+        headers: authHeaders()
+      });
       var data = await res.json();
 
       if (!data.success) {
@@ -371,7 +392,9 @@ function initInterviewPortal() {
 
   async function fetchDetailedResults() {
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/status');
+      var res = await fetch('/api/interviews/' + interviewId + '/status', {
+        headers: authHeaders()
+      });
       var data = await res.json();
       if (!data.success || !data.state) return;
 

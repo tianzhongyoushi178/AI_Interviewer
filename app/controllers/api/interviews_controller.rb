@@ -293,7 +293,7 @@ module Api
       end
     end
 
-    # start用: 認証済みユーザーがいればそのまま、いなければゲストユーザーを作成
+    # start用: 認証済みユーザーがいればそのまま、いなければゲストユーザーを割り当て
     def authenticate_or_create_guest!
       # 既存の認証手段を試行（トークン、APIキー、テストモード、Devise）
       token = request.headers['X-Interview-Token'] || params[:access_token]
@@ -321,10 +321,13 @@ module Api
         return
       end
 
-      # 認証手段がない場合はゲストユーザーを作成
-      @current_user = User.find_or_create_by(email: 'guest@interview.com') do |u|
-        u.name = 'Guest User'
-        u.password = SecureRandom.hex(16)
+      # 未認証ユーザーにはゲストユーザーを割り当て（既存のゲストユーザーを使い回す）
+      @current_user = User.find_by(email: 'guest@interview.com')
+      unless @current_user
+        render_api_error(
+          'Guest user not configured. Please contact administrator.',
+          status: :service_unavailable
+        )
       end
     end
 

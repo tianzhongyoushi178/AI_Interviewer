@@ -37,3 +37,11 @@ questions_data.each do |q_data|
 end
 
 puts "✅ Questions: #{situation.questions.count} created"
+
+# Create guest user (ブラウザからの未認証面接用)
+guest = User.find_or_create_by(email: 'guest@interview.com') do |u|
+  u.name = 'Guest'
+  u.password = SecureRandom.hex(16)
+  u.password_confirmation = u.password
+end
+puts "✅ Guest User: #{guest.email}"

@@ -5,16 +5,48 @@ services:
     build: .
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - bundle_cache:/usr/local/bundle
     environment:
-      - RAILS_ENV=development
-      - AI_INTERVIEW_TEST_MODE=true
+      - RAILS_ENV=production
+      - RAILS_LOG_TO_STDOUT=true
+      - RAILS_SERVE_STATIC_FILES=true
+      - AI_INTERVIEW_TEST_MODE=false
     env_file:
       - .env
-    stdin_open: true
-    tty: true
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ai_interviewer_production
+      POSTGRES_USER: ai_interviewer
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    environment:
+      - RAILS_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - AI_INTERVIEW_TEST_MODE=false
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
 
 volumes:
-  bundle_cache:
+  postgres_data:
+  redis_data:

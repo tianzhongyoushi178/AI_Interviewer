@@ -321,13 +321,10 @@ module Api
         return
       end
 
-      # 未認証ユーザーにはゲストユーザーを割り当て（既存のゲストユーザーを使い回す）
-      @current_user = User.find_by(email: 'guest@interview.com')
-      unless @current_user
-        render_api_error(
-          'Guest user not configured. Please contact administrator.',
-          status: :service_unavailable
-        )
+      # 未認証ユーザーにはゲストユーザーを割り当て（存在しなければ自動作成）
+      @current_user = User.find_or_create_by(email: 'guest@interview.com') do |u|
+        u.name = 'Guest'
+        u.password = SecureRandom.hex(16)
       end
     end
 

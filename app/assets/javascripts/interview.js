@@ -48,6 +48,7 @@ function initInterviewPortal() {
   let currentQuestion = null;
   let mediaRecorder = null;
   let recordedChunks = [];
+  let recordedBlob = null;
   let selectedOption = null;
   let isSubmitting = false;
 
@@ -56,6 +57,43 @@ function initInterviewPortal() {
     var headers = extra || {};
     if (accessToken) headers['X-Interview-Token'] = accessToken;
     return headers;
+  }
+
+  async function apiRequest(url, options) {
+    options = options || {};
+    options.headers = authHeaders(options.headers || {});
+
+    var res;
+    try {
+      res = await fetch(url, options);
+    } catch (netErr) {
+      throw new Error('\u30CD\u30C3\u30C8\u30EF\u30FC\u30AF\u30A8\u30E9\u30FC: ' + netErr.message);
+    }
+
+    var contentType = res.headers.get('content-type') || '';
+    var data;
+    if (contentType.indexOf('application/json') !== -1) {
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error('\u30B5\u30FC\u30D0\u30FC\u5FDC\u7B54\u306E\u89E3\u6790\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
+      }
+    } else {
+      data = { success: false, error: '\u30B5\u30FC\u30D0\u30FC\u30A8\u30E9\u30FC (' + res.status + ')' };
+    }
+
+    if (res.status === 410 && data.reason === 'timeout') {
+      data.__timeout = true;
+    }
+    if (res.status === 401) {
+      data.__unauthorized = true;
+    }
+
+    if (data.__timeout || data.__unauthorized) {
+      clearSavedInterview();
+    }
+
+    return { status: res.status, ok: res.ok, data: data };
   }
 
   // ===== ステップ制御 =====
@@ -117,12 +155,20 @@ function initInterviewPortal() {
     startBtn.textContent = '\u958B\u59CB\u4E2D...';
 
     try {
-      var res = await fetch('/api/interviews/start', {
+      var result = await apiRequest('/api/interviews/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ situation_id: parseInt(situationId, 10), language: language })
       });
-      var data = await res.json();
+      var data = result.data;
+
+      if (data.__timeout || data.__unauthorized) {
+        alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+        showStep(1);
+        startBtn.disabled = false;
+        startBtn.textContent = '\u9762\u63A5\u3092\u958B\u59CB\u3059\u308B';
+        return;
+      }
 
       if (!data.success) {
         alert(data.error || '\u9762\u63A5\u306E\u958B\u59CB\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
@@ -154,16 +200,81 @@ function initInterviewPortal() {
     interviewId = savedId;
     accessToken = localStorage.getItem('aiInterviewToken');
     showStep(2);
-    await refreshStatus();
-    await loadNextQuestion();
+    setStatus('\u9762\u63A5\u3092\u518D\u958B\u4E2D...');
+
+    try {
+      // まずステータスを確認
+      var statusResult = await apiRequest('/api/interviews/' + interviewId + '/status', {});
+      var statusData = statusResult.data;
+
+      if (statusData.__timeout || statusData.__unauthorized) {
+        alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+        showStep(1);
+        return;
+      }
+
+      if (!statusData.success) {
+        alert(statusData.error || '\u9762\u63A5\u306E\u53D6\u5F97\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
+        clearSavedInterview();
+        showStep(1);
+        return;
+      }
+
+      var currentStatus = statusData.state && statusData.state.status;
+
+      // 完了/失敗済みの場合は再開不可
+      if (currentStatus === 'completed' || currentStatus === 'failed') {
+        alert('\u3053\u306E\u9762\u63A5\u306F\u65E2\u306B\u5B8C\u4E86\u3057\u3066\u3044\u307E\u3059\u3002');
+        clearSavedInterview();
+        showStep(1);
+        return;
+      }
+
+      if (currentStatus === 'not_started') {
+        alert('\u9762\u63A5\u304C\u307E\u3060\u958B\u59CB\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002');
+        clearSavedInterview();
+        showStep(1);
+        return;
+      }
+
+      // abandonedまたはタイムアウト済みの場合は/resumeを呼んでin_progressに戻す
+      if (currentStatus === 'abandoned') {
+        var resumeResult = await apiRequest('/api/interviews/' + interviewId + '/resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        var resumeData = resumeResult.data;
+        if (resumeData.__timeout || resumeData.__unauthorized) {
+          alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+          showStep(1);
+          return;
+        }
+        if (!resumeData.success) {
+          alert(resumeData.error || '\u9762\u63A5\u306E\u518D\u958B\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
+          clearSavedInterview();
+          showStep(1);
+          return;
+        }
+      }
+
+      await refreshStatus();
+      await loadNextQuestion();
+    } catch (e) {
+      alert('\u30A8\u30E9\u30FC: ' + e.message);
+      clearSavedInterview();
+      showStep(1);
+    }
   }
 
   async function refreshStatus() {
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/status', {
-        headers: authHeaders()
-      });
-      var data = await res.json();
+      var result = await apiRequest('/api/interviews/' + interviewId + '/status', {});
+      var data = result.data;
+      if (data.__timeout || data.__unauthorized) {
+        alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+        showStep(1);
+        return;
+      }
       if (!data.success) {
         setStatus(data.error || '\u30B9\u30C6\u30FC\u30BF\u30B9\u53D6\u5F97\u5931\u6557');
         return;
@@ -216,10 +327,14 @@ function initInterviewPortal() {
 
   async function loadNextQuestion() {
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/next_question', {
-        headers: authHeaders()
-      });
-      var data = await res.json();
+      var result = await apiRequest('/api/interviews/' + interviewId + '/next_question', {});
+      var data = result.data;
+
+      if (data.__timeout || data.__unauthorized) {
+        alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+        showStep(1);
+        return;
+      }
 
       if (!data.success) {
         setStatus(data.error || '\u8CEA\u554F\u306E\u53D6\u5F97\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
@@ -277,7 +392,7 @@ function initInterviewPortal() {
     var hasText = textAnswer && textAnswer.trim().length > 0;
     var hasAudio = audioFileInput.files[0];
     var hasVideo = videoFileInput.files[0];
-    var hasRecording = recordedChunks.length > 0;
+    var hasRecording = recordedBlob !== null && recordedBlob.size > 0;
     var hasSelection = selectedOption;
 
     if (!hasText && !hasAudio && !hasVideo && !hasRecording && !hasSelection) {
@@ -303,8 +418,7 @@ function initInterviewPortal() {
     if (hasAudio) {
       form.append('audio_file', audioFileInput.files[0]);
     } else if (hasRecording) {
-      var blob = new Blob(recordedChunks, { type: 'audio/webm' });
-      form.append('audio_file', blob, 'recording.webm');
+      form.append('audio_file', recordedBlob, 'recording.webm');
     }
 
     if (hasVideo) {
@@ -312,12 +426,17 @@ function initInterviewPortal() {
     }
 
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/submit_answer', {
+      var result = await apiRequest('/api/interviews/' + interviewId + '/submit_answer', {
         method: 'POST',
-        headers: authHeaders(),
         body: form
       });
-      var data = await res.json();
+      var data = result.data;
+
+      if (data.__timeout || data.__unauthorized) {
+        alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+        showStep(1);
+        return;
+      }
 
       if (!data.success) {
         alert(data.error || '\u56DE\u7B54\u306E\u9001\u4FE1\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
@@ -326,8 +445,10 @@ function initInterviewPortal() {
 
       // Reset form
       recordedChunks = [];
+      recordedBlob = null;
       selectedOption = null;
       if (recordedAudio) recordedAudio.src = '';
+      if (recordStatus) recordStatus.textContent = '\u5F85\u6A5F\u4E2D';
       byId('text_answer').value = '';
       audioFileInput.value = '';
       videoFileInput.value = '';
@@ -348,11 +469,18 @@ function initInterviewPortal() {
     completeBtn.textContent = '\u5B8C\u4E86\u51E6\u7406\u4E2D...';
 
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/complete', {
-        method: 'POST',
-        headers: authHeaders()
+      var result = await apiRequest('/api/interviews/' + interviewId + '/complete', {
+        method: 'POST'
       });
-      var data = await res.json();
+      var data = result.data;
+
+      if (data.__timeout || data.__unauthorized) {
+        alert('\u30BB\u30C3\u30B7\u30E7\u30F3\u304C\u30BF\u30A4\u30E0\u30A2\u30A6\u30C8\u3057\u307E\u3057\u305F\u3002\u6700\u521D\u304B\u3089\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+        showStep(1);
+        completeBtn.disabled = false;
+        completeBtn.textContent = '\u9762\u63A5\u3092\u5B8C\u4E86\u3059\u308B';
+        return;
+      }
 
       if (!data.success) {
         alert(data.error || '\u9762\u63A5\u306E\u5B8C\u4E86\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
@@ -392,10 +520,8 @@ function initInterviewPortal() {
 
   async function fetchDetailedResults() {
     try {
-      var res = await fetch('/api/interviews/' + interviewId + '/status', {
-        headers: authHeaders()
-      });
-      var data = await res.json();
+      var result = await apiRequest('/api/interviews/' + interviewId + '/status', {});
+      var data = result.data;
       if (!data.success || !data.state) return;
 
       var state = data.state;
@@ -446,7 +572,16 @@ function initInterviewPortal() {
       };
 
       mediaRecorder.onstop = function() {
+        if (recordedChunks.length === 0) {
+          recordedBlob = null;
+          recordStatus.textContent = '\u9332\u97F3\u30C7\u30FC\u30BF\u304C\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u518D\u8A66\u884C\u3057\u3066\u304F\u3060\u3055\u3044\u3002';
+          return;
+        }
         var blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        recordedBlob = blob;
+        if (recordedAudio.src && recordedAudio.src.indexOf('blob:') === 0) {
+          URL.revokeObjectURL(recordedAudio.src);
+        }
         recordedAudio.src = URL.createObjectURL(blob);
         recordStatus.textContent = '\u9332\u97F3\u5B8C\u4E86';
       };
@@ -467,6 +602,11 @@ function initInterviewPortal() {
       if (!mediaRecorder) await setupRecorder();
       if (!mediaRecorder) return;
       recordedChunks = [];
+      recordedBlob = null;
+      if (recordedAudio && recordedAudio.src && recordedAudio.src.indexOf('blob:') === 0) {
+        URL.revokeObjectURL(recordedAudio.src);
+      }
+      if (recordedAudio) recordedAudio.src = '';
       mediaRecorder.start();
       recordStart.disabled = true;
       recordStop.disabled = false;

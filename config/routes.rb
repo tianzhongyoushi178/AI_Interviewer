@@ -89,8 +89,9 @@ Rails.application.routes.draw do
     end
   end
 
-  # GETで /api/interviews/start にアクセスされた場合は面接ページへリダイレクト
+  # GETで /api/interviews/start および start_by_token にアクセスされた場合は面接ページへリダイレクト
   get '/api/interviews/start', to: redirect('/interview')
+  get '/api/interviews/start_by_token', to: redirect('/interview')
 
   namespace :admin do
     resources :interview_results, only: [:index, :show]

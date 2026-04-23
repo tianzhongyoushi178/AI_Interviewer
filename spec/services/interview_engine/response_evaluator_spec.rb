@@ -137,6 +137,68 @@ RSpec.describe InterviewEngine::ResponseEvaluator do
         result = evaluator.evaluate
         expect(result.passed).to eq(true)
       end
+
+      context '正解未設定の情報収集型選択肢' do
+        # 管理画面で「正解の選択肢（任意）」が未入力の場合、情報収集目的の質問とみなし、
+        # 選択されたいずれの選択肢も満点・合格として扱う。
+        it 'correctキーが存在しない場合は満点で合格にする' do
+          mc_question.update!(options: { 'choices' => %w[Ruby Python Go] })
+          mc_response.update!(audio_transcript: 'Ruby')
+          evaluator = described_class.new(mc_response, language: 'ja')
+
+          result = evaluator.evaluate
+
+          expect(result.final_score).to eq(100)
+          expect(result.passed).to eq(true)
+          expect(result.ai_reasoning).to match(/informational|情報収集/i)
+        end
+
+        it 'correctが空文字の場合は満点で合格にする' do
+          mc_question.update!(options: { 'choices' => %w[Ruby Python Go], 'correct' => '' })
+          mc_response.update!(audio_transcript: 'Python')
+          evaluator = described_class.new(mc_response, language: 'ja')
+
+          result = evaluator.evaluate
+
+          expect(result.final_score).to eq(100)
+          expect(result.passed).to eq(true)
+        end
+
+        it 'correctがnilの場合は満点で合格にする' do
+          mc_question.update!(options: { 'choices' => %w[Ruby Python Go], 'correct' => nil })
+          mc_response.update!(audio_transcript: 'Go')
+          evaluator = described_class.new(mc_response, language: 'ja')
+
+          result = evaluator.evaluate
+
+          expect(result.final_score).to eq(100)
+          expect(result.passed).to eq(true)
+        end
+
+        it 'correctが空白文字のみの場合は満点で合格にする' do
+          mc_question.update!(options: { 'choices' => %w[Ruby Python], 'correct' => '   ' })
+          mc_response.update!(audio_transcript: 'Ruby')
+          evaluator = described_class.new(mc_response, language: 'ja')
+
+          result = evaluator.evaluate
+
+          expect(result.final_score).to eq(100)
+          expect(result.passed).to eq(true)
+        end
+
+        it '必須質問であっても情報収集型ならリジェクト判定が発火しない' do
+          mc_question.update!(options: { 'choices' => %w[Ruby Python Go] }, required: true)
+          mc_response.update!(audio_transcript: 'Ruby')
+          evaluator = described_class.new(mc_response, language: 'ja')
+
+          result = evaluator.evaluate
+
+          interview.reload
+          expect(interview.status).to eq('in_progress')
+          expect(interview.rejection_reason).to be_nil
+          expect(result.passed).to eq(true)
+        end
+      end
     end
 
     context 'エラーハンドリング' do

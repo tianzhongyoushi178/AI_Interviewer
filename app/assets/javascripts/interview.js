@@ -266,6 +266,42 @@ function initInterviewPortal() {
     }
   }
 
+  // 面接が途中で終了（failed / completed）した場合に結果画面へ自動遷移する。
+  // /next_question が "Interview not in progress" を返した際の救済処理として使う。
+  async function transitionIfInterviewEnded() {
+    try {
+      var result = await apiRequest('/api/interviews/' + interviewId + '/status', {});
+      var data = result.data;
+      if (!data || !data.success || !data.state) return false;
+
+      var s = data.state.status;
+      if (s === 'failed' || s === 'completed') {
+        clearSavedInterview();
+
+        // 結果画面を表示
+        showStep(3);
+
+        // 結果データを表示（complete APIのレスポンス互換の形で整形）
+        var rejectionMsg = data.state.rejection_reason || '';
+        displayResults({
+          message: s === 'failed'
+            ? '\u9762\u63A5\u304C\u7D42\u4E86\u3057\u307E\u3057\u305F\u3002' + (rejectionMsg ? ('\n' + rejectionMsg) : '')
+            : '\u9762\u63A5\u304C\u5B8C\u4E86\u3057\u307E\u3057\u305F\u3002',
+          result: {
+            final_status: s === 'failed' ? 'failed' : 'passed',
+            average_score: null,
+            answered_questions: data.state.answered_questions,
+            total_questions: data.state.total_questions
+          }
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   async function refreshStatus() {
     try {
       var result = await apiRequest('/api/interviews/' + interviewId + '/status', {});
@@ -337,6 +373,9 @@ function initInterviewPortal() {
       }
 
       if (!data.success) {
+        var transitioned = await transitionIfInterviewEnded();
+        if (transitioned) return;
+
         setStatus(data.error || '\u8CEA\u554F\u306E\u53D6\u5F97\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
         return;
       }

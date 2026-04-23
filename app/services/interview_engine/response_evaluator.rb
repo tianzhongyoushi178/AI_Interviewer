@@ -132,6 +132,20 @@ module InterviewEngine
       choices = options['choices'] || options[:choices] || []
       correct = options['correct'] || options[:correct]
 
+      # 正解未設定（キー欠落 / nil / 空白のみ）は情報収集型とみなし満点扱い。
+      # 管理画面でも「正解の選択肢（任意）」と明示されているため、
+      # 未設定の場合に不合格とするのは仕様と矛盾する。
+      if correct.nil? || correct.to_s.strip.empty?
+        return {
+          relevance_score: 100,
+          correctness_score: 100,
+          clarity_score: 100,
+          final_score: 100,
+          passed: true,
+          reasoning: 'Informational choice question (no correct answer defined)'
+        }.with_indifferent_access
+      end
+
       selected = @response.audio_transcript.to_s.strip.downcase
       correct_choice = resolve_correct_choice(correct, choices)
 

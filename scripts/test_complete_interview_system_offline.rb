@@ -108,7 +108,9 @@ class InterviewSystemOfflineTest
 
       test('5. Submit Answer', response.persisted?, "Response ID: #{response.id}")
 
-      # 5. Get second question
+      # 5. Get second question (新しい selector で最新の interview_responses を反映)
+      @interview.reload
+      selector = InterviewEngine::QuestionSelector.new(@interview)
       question2 = selector.get_next_question
       response2 = @interview.interview_responses.create!(
         question: question2,
@@ -118,6 +120,8 @@ class InterviewSystemOfflineTest
       test('6. Submit Second Answer', response2.persisted?, "Response 2 ID: #{response2.id}")
 
       # 6. Get third question
+      @interview.reload
+      selector = InterviewEngine::QuestionSelector.new(@interview)
       question3 = selector.get_next_question
       response3 = @interview.interview_responses.create!(
         question: question3,
@@ -127,6 +131,8 @@ class InterviewSystemOfflineTest
       test('7. Submit Third Answer', response3.persisted?, "Response 3 ID: #{response3.id}")
 
       # 7. Verify all questions answered
+      @interview.reload
+      selector = InterviewEngine::QuestionSelector.new(@interview)
       should_continue = selector.should_continue_interview?
       test('8. All Questions Answered', !should_continue, "No more questions available")
 
@@ -167,7 +173,8 @@ class InterviewSystemOfflineTest
     begin
       session_manager = InterviewEngine::SessionManager.new(@user, @situation)
       second_interview = session_manager.start_interview(language: 'en')
-      test('Duplicate Interview Prevention', second_interview.nil? || second_interview.id != @interview.id, 'Should prevent or return existing')
+      # 重複防止OKとみなす条件: nil / 既存(in_progress)の同一IDを返した / 別IDだが新規作成は許されないので発生しないはず
+      test('Duplicate Interview Prevention', second_interview.nil? || second_interview.id == @interview.id, 'Should prevent or return existing')
     rescue => e
       test('Duplicate Interview Prevention', e.message.include?('already') || e.message.include?('unique') || e.message.include?('Validation failed'), "Error: #{e.message[0..60]}")
     end

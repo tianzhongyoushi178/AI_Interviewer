@@ -34,7 +34,8 @@
 
         .interview-actions
           button#start_interview.btn-start 面接を開始する
-          button#resume_interview.btn-resume 前回の面接を再開
+          / サーバーで「再開可能」と判定された場合のみJSが表示する。新規ユーザーには見せない。
+          button#resume_interview.btn-resume style="display:none" 前回の面接を再開
 
     /! ===== Step 2: 面接実施 =====
     #step-2.step

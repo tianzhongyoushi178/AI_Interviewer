@@ -4,6 +4,8 @@ module InterviewEngine
     class SessionError < StandardError; end
     class TimeoutError < SessionError; end
     class ResumeError < SessionError; end
+    # 1ユーザー1situationにつき1回のみ受験可。完了/失敗済みの再受験を試みた場合に発生。
+    class AlreadyCompletedError < SessionError; end
 
     def initialize(user, situation)
       @user = user
@@ -20,9 +22,9 @@ module InterviewEngine
         return existing_in_progress
       end
 
-      # 完了/失敗済み面接がある場合は再受験不可
+      # 完了/失敗済み面接がある場合は再受験不可（1ユーザー1situation = 1回のみ）
       existing_done = Interview.by_user_and_situation(@user, @situation).completed_or_failed.first
-      raise SessionError, "Interview already completed for this situation" if existing_done
+      raise AlreadyCompletedError, "Interview already completed for this situation" if existing_done
 
       # abandoned面接があれば復帰を試みる
       existing_abandoned = Interview.by_user_and_situation(@user, @situation)
@@ -71,7 +73,7 @@ module InterviewEngine
           raise ResumeError, "Interview cannot be resumed (max retries exceeded)"
         end
       elsif interview.completed? || interview.failed?
-        raise SessionError, "Interview has already ended (#{interview.status})"
+        raise AlreadyCompletedError, "Interview has already ended (#{interview.status})"
       end
     end
 
@@ -174,12 +176,18 @@ module InterviewEngine
     end
 
     # タイムアウトした面接を一括abandon（バッチ処理用）
+    # 複数ワーカー同時実行時の二重abandon!を防ぐため with_lock + 状態再確認を行う
     def self.expire_timed_out_sessions!
       Interview.where(status: :in_progress)
                .where.not(last_activity_at: nil)
                .includes(:situation)
                .find_each do |interview|
-        if interview.timed_out?
+        next unless interview.timed_out?
+
+        interview.with_lock do
+          # ロック取得後に最新状態を再確認（競合下で他ワーカーが既にabandon済みの可能性）
+          interview.reload
+          next unless interview.in_progress? && interview.timed_out?
           interview.abandon!
           Rails.logger.info("Interview ##{interview.id} expired due to timeout")
         end

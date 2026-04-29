@@ -1,0 +1,8 @@
+# sidekiq-cron による定期ジョブ定義
+# config/initializers/sidekiq.rb で読み込まれる
+
+expire_timed_out_interviews:
+  cron: "*/5 * * * *"
+  class: "ExpireTimedOutInterviewsJob"
+  queue: default
+  description: "5分毎に in_progress の面接で last_activity_at がタイムアウトしたものを abandoned へ遷移させる"

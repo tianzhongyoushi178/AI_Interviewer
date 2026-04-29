@@ -29,6 +29,14 @@ module Api
         session_timeout_minutes: situation.session_timeout_minutes,
         remaining_seconds: interview.remaining_seconds
       }, status: :created
+    rescue InterviewEngine::SessionManager::AlreadyCompletedError => e
+      # 1回のみ仕様: 受験済みは「エラー」ではなく「案内」として返す
+      render_api_error(
+        e.message,
+        status: :unprocessable_entity,
+        reason: 'already_completed',
+        details: { situation_id: params[:situation_id].to_i }
+      )
     rescue InterviewEngine::SessionManager::SessionError => e
       render_api_error(e.message, status: :unprocessable_entity)
     end
@@ -58,6 +66,8 @@ module Api
       render_api_error(e.message, status: :gone, reason: 'timeout')
     rescue InterviewEngine::SessionManager::ResumeError => e
       render_api_error(e.message, status: :forbidden, reason: 'resume_limit')
+    rescue InterviewEngine::SessionManager::AlreadyCompletedError => e
+      render_api_error(e.message, status: :unprocessable_entity, reason: 'already_completed')
     rescue InterviewEngine::SessionManager::SessionError => e
       render_api_error(e.message, status: :unprocessable_entity)
     end
@@ -321,10 +331,34 @@ module Api
         return
       end
 
-      # 未認証ユーザーにはゲストユーザーを割り当て（存在しなければ自動作成）
-      @current_user = User.find_or_create_by(email: 'guest@interview.com') do |u|
-        u.name = 'Guest'
-        u.password = SecureRandom.hex(16)
+      # 未認証ユーザーには「このブラウザ専用」のゲストを割り当てる。
+      # cookieに保存した一意IDをキーにし、別ユーザーと面接状態が混在するのを防ぐ。
+      @current_user = find_or_create_browser_guest_user
+    end
+
+    # ブラウザ単位で一意なゲストユーザーを払い出す（共有ゲスト問題の解消）
+    def find_or_create_browser_guest_user
+      guest_id = cookies.encrypted[:ai_interview_guest_id]
+      if guest_id.blank?
+        guest_id = SecureRandom.hex(16)
+        cookies.encrypted[:ai_interview_guest_id] = {
+          value: guest_id,
+          expires: 30.days.from_now,
+          httponly: true,
+          same_site: :lax,
+          secure: Rails.env.production?
+        }
+      end
+
+      email = "guest_#{guest_id}@interview.local"
+      # 同一ブラウザからの並列リクエスト時の RecordNotUnique を吸収する
+      begin
+        User.find_or_create_by!(email: email) do |u|
+          u.name = "Guest-#{guest_id[0, 6]}"
+          u.password = SecureRandom.hex(16)
+        end
+      rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+        User.find_by!(email: email)
       end
     end
 
@@ -370,9 +404,11 @@ module Api
     def authorize_interview!
       return if test_mode?
 
+      # 設計方針: URL招待が主動線。access_token を知っていることが本人性の証明。
+      # token が提示された場合は user_id 突合せ不要（招待URLを受け取った本人とみなす）。
+      # token なしの場合のみ Devise / ゲストCookie 由来の current_user で突合せる。
       token = request.headers['X-Interview-Token'] || params[:access_token]
       if token.present?
-        # トークンが提供された場合はトークンの一致/不一致で完結させる
         if @interview.access_token.present? &&
            ActiveSupport::SecurityUtils.secure_compare(token, @interview.access_token)
           return

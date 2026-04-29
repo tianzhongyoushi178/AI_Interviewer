@@ -170,6 +170,24 @@ function initInterviewPortal() {
         return;
       }
 
+      // \u53D7\u9A13\u6E08\u307F\u6848\u5185\uFF081\u56DE\u306E\u307F\u4ED5\u69D8\u306B\u3088\u308B\u518D\u53D7\u9A13\u30D6\u30ED\u30C3\u30AF\uFF09
+      if (data.reason === 'already_completed') {
+        clearSavedInterview();
+        showStep(3);
+        displayResults({
+          message: '\u3053\u306E\u9762\u63A5\u306F\u65E2\u306B\u53D7\u9A13\u6E08\u307F\u3067\u3059\u3002\u540C\u3058\u9762\u63A5\u306F1\u56DE\u306E\u307F\u53D7\u9A13\u3067\u304D\u307E\u3059\u3002',
+          result: {
+            final_status: 'completed',
+            average_score: null,
+            answered_questions: null,
+            total_questions: null
+          }
+        });
+        startBtn.disabled = false;
+        startBtn.textContent = '\u9762\u63A5\u3092\u958B\u59CB\u3059\u308B';
+        return;
+      }
+
       if (!data.success) {
         alert(data.error || '\u9762\u63A5\u306E\u958B\u59CB\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002');
         startBtn.disabled = false;
@@ -558,6 +576,8 @@ function initInterviewPortal() {
   }
 
   async function fetchDetailedResults() {
+    // already_completed 等で interviewId が未確定のケースは詳細取得をスキップ
+    if (!interviewId) return;
     try {
       var result = await apiRequest('/api/interviews/' + interviewId + '/status', {});
       var data = result.data;
@@ -670,9 +690,37 @@ function initInterviewPortal() {
     });
   }
 
-  // Check for saved interview
-  var savedId = loadSavedInterview();
-  if (resumeBtn) resumeBtn.disabled = !savedId;
+  // 起動時: localStorage に id があり、かつサーバー上で本当に再開可能な場合のみ
+  // 「前回の面接を再開」ボタンを表示する。新規ユーザーや受験済みユーザーには見せない。
+  (async function maybeShowResumeButton() {
+    if (!resumeBtn) return;
+    var savedId = loadSavedInterview();
+    if (!savedId) return;
+
+    var tmpToken = localStorage.getItem('aiInterviewToken');
+    if (tmpToken) accessToken = tmpToken;
+
+    try {
+      var result = await apiRequest('/api/interviews/' + savedId + '/status', {});
+      var data = result.data;
+      if (!data || !data.success || !data.state) {
+        clearSavedInterview();
+        return;
+      }
+      var s = data.state.status;
+      // in_progress: タイムアウト前なら継続可、タイムアウト後は state.resumable で判定
+      // abandoned: state.resumable が true（resume_count < max かつ allow_resume）の時のみ
+      var canResume = (s === 'in_progress') || (s === 'abandoned' && data.state.resumable === true);
+      if (canResume) {
+        resumeBtn.style.display = 'inline-block';
+      } else {
+        // completed / failed / not_started / 復帰上限到達などは再開不可。古い記録をクリア。
+        clearSavedInterview();
+      }
+    } catch (e) {
+      // ネットワークエラー時はボタンを出さない（壊れた状態を見せない）
+    }
+  })();
 }
 
 document.addEventListener('turbolinks:load', initInterviewPortal);
